@@ -198,7 +198,6 @@ app.get('/servers/:id/members', async (req, res) => {
 
         const memberArray = Array.from(members.values());
 
-        // Use REST API to fetch detailed user data
         const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
         const memberDetails = await Promise.all(memberArray.map(async member => {
