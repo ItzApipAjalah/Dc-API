@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord User Lookup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.3);
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+
+        /* Loading animation */
+        .loading-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <div class="text-center mb-12 animate-fade">
+            <h1 class="text-5xl font-bold mb-3 gradient-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
+                Discord User Lookup
+            </h1>
+            <p class="text-gray-400 text-lg">Explore detailed Discord user profiles</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="max-w-xl mx-auto mb-12">
+            <div class="glass-effect rounded-2xl p-1">
+                <div class="flex gap-2">
+                    <input type="text" 
+                        id="userId" 
+                        placeholder="Enter Discord User ID" 
+                        class="w-full px-6 py-4 rounded-xl bg-gray-800/50 border border-gray-700/50 focus:outline-none focus:border-indigo-500 text-white text-lg transition-all"
+                        onkeypress="if(event.key === 'Enter') fetchUserDetails()">
+                    <button onclick="fetchUserDetails()" 
+                        class="px-8 py-4 gradient-bg rounded-xl hover:opacity-90 transition-all font-semibold shadow-lg shadow-indigo-500/20">
+                        Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Card -->
+        <div id="userDetails" class="max-w-3xl mx-auto mt-8 hidden animate-fade">
+            <div class="glass-effect rounded-2xl overflow-hidden shadow-xl">
+                <!-- User Header -->
+                <div class="relative">
+                    <div id="userBanner" class="w-full h-48 bg-gray-800 bg-cover bg-center transition-all duration-300"></div>
+                    <div class="absolute -bottom-16 left-8">
+                        <div class="p-1 rounded-full bg-gray-800/80 backdrop-blur-sm">
+                            <img id="userAvatar" class="w-32 h-32 rounded-full ring-4 ring-indigo-500/50" src="" alt="User Avatar">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Info -->
+                <div class="pt-20 p-8">
+                    <div class="flex items-baseline gap-3 mb-6">
+                        <h2 id="userName" class="text-3xl font-bold"></h2>
+                        <span id="userId" class="text-sm text-gray-400 font-mono"></span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Global Name</p>
+                            <p id="globalName" class="font-semibold text-lg"></p>
+                        </div>
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Created At</p>
+                            <p id="createdAt" class="font-semibold text-lg"></p>
+                        </div>
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Status</p>
+                            <p id="userStatus" class="font-semibold text-lg flex items-center gap-2"></p>
+                        </div>
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Bot</p>
+                            <p id="isBot" class="font-semibold text-lg"></p>
+                        </div>
+                    </div>
+
+                    <!-- Activities -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <span class="text-indigo-400">🎮</span> Activities
+                        </h3>
+                        <div id="userActivities" class="space-y-3">
+                            <!-- Activities will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Mutual Servers -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <span class="text-indigo-400">🏠</span> Mutual Servers
+                        </h3>
+                        <div id="mutualServers" class="grid grid-cols-2 gap-3">
+                            <!-- Servers will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="max-w-md mx-auto mt-6 hidden animate-fade">
+            <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-center">
+                <span id="errorText"></span>
+            </div>
+        </div>
+
+        <!-- Server Details Modal -->
+        <div id="serverModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden animate-fade">
+            <div class="min-h-screen flex items-center justify-center p-4">
+                <div class="glass-effect rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-xl">
+                    <!-- Modal Header -->
+                    <div class="p-6 border-b border-gray-700/50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <img id="modalServerIcon" class="w-16 h-16 rounded-2xl" src="" alt="Server Icon">
+                                <div>
+                                    <h3 id="modalServerName" class="text-2xl font-bold"></h3>
+                                    <p id="modalServerId" class="text-gray-400 text-sm font-mono"></p>
+                                </div>
+                            </div>
+                            <button onclick="closeServerModal()" class="text-gray-400 hover:text-white transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Modal Content -->
+                    <div class="p-6 overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar">
+                        <!-- Server Stats -->
+                        <div class="grid grid-cols-3 gap-4 mb-8">
+                            <div class="glass-effect rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-sm mb-1">Members</p>
+                                <p id="modalMemberCount" class="text-2xl font-bold text-indigo-400"></p>
+                            </div>
+                            <div class="glass-effect rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-sm mb-1">Channels</p>
+                                <p id="modalChannelCount" class="text-2xl font-bold text-indigo-400"></p>
+                            </div>
+                            <div class="glass-effect rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-sm mb-1">Roles</p>
+                                <p id="modalRoleCount" class="text-2xl font-bold text-indigo-400"></p>
+                            </div>
+                        </div>
+
+                        <!-- Server Info -->
+                        <div class="space-y-6">
+                            <div class="glass-effect rounded-xl p-4">
+                                <h4 class="text-lg font-semibold mb-3">Server Information</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Created At</p>
+                                        <p id="modalCreatedAt" class="font-medium"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Boost Level</p>
+                                        <p id="modalBoostLevel" class="font-medium"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Verification Level</p>
+                                        <p id="modalVerification" class="font-medium"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Owner</p>
+                                        <p id="modalOwner" class="font-medium"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Features -->
+                            <div class="glass-effect rounded-xl p-4">
+                                <h4 class="text-lg font-semibold mb-3">Features</h4>
+                                <div id="modalFeatures" class="flex flex-wrap gap-2">
+                                    <!-- Features will be inserted here -->
+                                </div>
+                            </div>
+
+                            <!-- Add this inside the Modal Content div, after the Features section -->
+                            <div class="glass-effect rounded-xl p-4 mt-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-lg font-semibold">Members</h4>
+                                    <div class="flex gap-2">
+                                        <button id="prevPage" onclick="changeMembersPage(-1)" class="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Previous
+                                        </button>
+                                        <span id="pageInfo" class="px-3 py-1 rounded-lg bg-gray-800">Page 1</span>
+                                        <button id="nextPage" onclick="changeMembersPage(1)" class="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="serverMembers" class="space-y-2">
+                                    <!-- Members will be inserted here -->
+                                    <div class="text-center text-gray-400 py-4">
+                                        Loading members...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add loading overlay to the modal -->
+        <div id="serverLoadingOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div class="glass-effect rounded-xl p-6 flex items-center gap-3">
+                <svg class="loading-spin w-6 h-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-lg font-medium">Loading server details...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update status icon function
+        function getStatusIcon(status) {
+            const icons = {
+                'online': '🟢',
+                'idle': '🟡',
+                'dnd': '🔴',
+                'offline': '⚫'
+            };
+            return icons[status] || '⚫';
+        }
+
+        async function fetchUserDetails() {
+            const userIdInput = document.getElementById('userId').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const userDetails = document.getElementById('userDetails');
+
+            try {
+                errorMessage.classList.add('hidden');
+                const response = await fetch(`/users/${userIdInput}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to fetch user details');
+                }
+
+                // Update UI with user details
+                document.getElementById('userBanner').style.backgroundImage = 
+                    data.bannerURL ? `url('${data.bannerURL}')` : 'none';
+                document.getElementById('userAvatar').src = 
+                    data.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                document.getElementById('userName').textContent = data.username;
+                document.getElementById('userId').textContent = data.id;
+                document.getElementById('globalName').textContent = data.globalName || 'None';
+                document.getElementById('createdAt').textContent = new Date(data.createdAt).toLocaleDateString();
+                document.getElementById('userStatus').innerHTML = `${getStatusIcon(data.presence?.status || 'offline')} ${data.presence?.status || 'offline'}`;
+                document.getElementById('isBot').textContent = data.isBot ? 'Yes' : 'No';
+
+                // Update activities
+                const activitiesContainer = document.getElementById('userActivities');
+                if (data.presence?.activities && data.presence.activities.length > 0) {
+                    activitiesContainer.innerHTML = data.presence.activities.map(activity => `
+                        <div class="glass-effect rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">${getActivityTypeIcon(activity.type)}</span>
+                                    <span class="font-semibold">${activity.name}</span>
+                                </div>
+                                <span class="text-sm text-indigo-400 font-medium px-3 py-1 bg-indigo-400/10 rounded-full">${activity.type}</span>
+                            </div>
+                            ${activity.state ? `
+                                <div class="mt-3 text-gray-300">
+                                    ${activity.state}
+                                </div>
+                            ` : ''}
+                            ${activity.details ? `
+                                <div class="mt-1 text-gray-400">
+                                    ${activity.details}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    activitiesContainer.innerHTML = `
+                        <div class="glass-effect rounded-xl p-6 text-gray-400 text-center">
+                            No activities
+                        </div>
+                    `;
+                }
+
+                // Update mutual servers
+                const mutualServersContainer = document.getElementById('mutualServers');
+                mutualServersContainer.innerHTML = data.mutualGuilds.map(guild => `
+                    <div onclick="showServerDetails('${guild.id}')" 
+                        class="glass-effect rounded-xl p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer">
+                        ${guild.icon ? 
+                            `<img src="${guild.icon}" class="w-10 h-10 rounded-xl">` : 
+                            '<div class="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center text-lg font-bold">' + guild.name.charAt(0) + '</div>'
+                        }
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium truncate">${guild.name}</p>
+                            ${guild.member.nickname ? 
+                                `<p class="text-sm text-gray-400 truncate">Nickname: ${guild.member.nickname}</p>` : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                `).join('');
+
+                userDetails.classList.remove('hidden');
+            } catch (error) {
+                document.getElementById('errorText').textContent = error.message;
+                errorMessage.classList.remove('hidden');
+                userDetails.classList.add('hidden');
+            }
+        }
+
+        // Helper function to get activity type icons (unchanged)
+        function getActivityTypeIcon(type) {
+            switch (type) {
+                case 'PLAYING': return '🎮';
+                case 'STREAMING': return '🎥';
+                case 'LISTENING': return '🎵';
+                case 'WATCHING': return '📺';
+                case 'COMPETING': return '🏆';
+                case 'CUSTOM': return '🎯';
+                default: return '⚡';
+            }
+        }
+
+        let currentServerId = null;
+        let currentPage = 1;
+        let isLoading = false;
+        let loadingTimeout;
+
+        async function showServerDetails(serverId) {
+            if (isLoading) return; // Prevent spam clicking
+            
+            const modal = document.getElementById('serverModal');
+            const loadingOverlay = document.getElementById('serverLoadingOverlay');
+            currentServerId = serverId;
+            currentPage = 1;
+            
+            try {
+                isLoading = true;
+                loadingOverlay.classList.remove('hidden');
+                modal.classList.remove('hidden');
+
+                // Clear previous content
+                document.getElementById('modalFeatures').innerHTML = '';
+                document.getElementById('serverMembers').innerHTML = `
+                    <div class="text-center text-gray-400 py-4">
+                        Loading members...
+                    </div>
+                `;
+
+                // Add loading timeout
+                loadingTimeout = setTimeout(() => {
+                    loadingOverlay.classList.add('hidden');
+                }, 10000); // 10 second timeout
+
+                // Fetch server details
+                const response = await fetch(`/servers/${serverId}/detail`);
+                const data = await response.json();
+
+                // Update modal content
+                document.getElementById('modalServerIcon').src = data.general.icon !== 'No icon' ? data.general.icon : 'https://cdn.discordapp.com/embed/avatars/0.png';
+                document.getElementById('modalServerName').textContent = data.general.name;
+                document.getElementById('modalServerId').textContent = data.general.id;
+                document.getElementById('modalMemberCount').textContent = data.stats.totalMembers;
+                document.getElementById('modalChannelCount').textContent = data.channels.total;
+                document.getElementById('modalRoleCount').textContent = data.roles.length;
+                document.getElementById('modalCreatedAt').textContent = new Date(data.general.createdAt).toLocaleDateString();
+                document.getElementById('modalBoostLevel').textContent = `Level ${data.stats.boostLevel}`;
+                document.getElementById('modalVerification').textContent = data.stats.verificationLevel;
+                document.getElementById('modalOwner').textContent = data.owner.tag || 'Unknown';
+
+                // Update features with loading animation
+                const features = data.features.map(feature => 
+                    `<span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm animate-fade">${feature}</span>`
+                ).join('');
+                document.getElementById('modalFeatures').innerHTML = features;
+
+                // Fetch initial members
+                await fetchServerMembers(serverId, 1);
+
+            } catch (error) {
+                console.error('Error fetching server details:', error);
+                document.getElementById('serverMembers').innerHTML = `
+                    <div class="text-center text-red-400 py-4">
+                        Failed to load server details. Please try again.
+                    </div>
+                `;
+            } finally {
+                clearTimeout(loadingTimeout);
+                loadingOverlay.classList.add('hidden');
+                isLoading = false;
+            }
+        }
+
+        async function fetchServerMembers(serverId, page) {
+            const membersContainer = document.getElementById('serverMembers');
+            
+            try {
+                membersContainer.innerHTML = `
+                    <div class="text-center text-gray-400 py-4 flex items-center justify-center gap-2">
+                        <svg class="loading-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading members...
+                    </div>
+                `;
+
+                const response = await fetch(`/servers/${serverId}/members?page=${page}`);
+                const data = await response.json();
+
+                // Update pagination info
+                document.getElementById('pageInfo').textContent = `Page ${data.page} of ${data.totalPages}`;
+                document.getElementById('prevPage').disabled = data.page <= 1;
+                document.getElementById('nextPage').disabled = !data.nextPage;
+
+                // Update members list
+                if (data.members.length === 0) {
+                    membersContainer.innerHTML = `
+                        <div class="text-center text-gray-400 py-4">
+                            No members found
+                        </div>
+                    `;
+                    return;
+                }
+
+                membersContainer.innerHTML = data.members.map(member => `
+                    <div class="glass-effect rounded-lg p-3 flex items-center justify-between group hover:bg-gray-700/50 transition-all">
+                        <div class="flex items-center gap-3">
+                            <img src="${member.avatarURL}" class="w-10 h-10 rounded-full" alt="${member.username}'s avatar">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium">${member.username}</span>
+                                    ${member.nickname ? `
+                                        <span class="text-gray-400 text-sm">(${member.nickname})</span>
+                                    ` : ''}
+                                    ${member.isBot ? `
+                                        <span class="px-2 py-0.5 rounded-full text-xs bg-indigo-500/20 text-indigo-300">BOT</span>
+                                    ` : ''}
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-gray-400">
+                                    <span>${getStatusIcon(member.status)}</span>
+                                    ${member.globalName ? `
+                                        <span>${member.globalName}</span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ${member.activities && member.activities.length > 0 ? `
+                            <div class="hidden group-hover:block text-sm text-gray-400">
+                                ${member.activities[0].name}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error fetching server members:', error);
+                membersContainer.innerHTML = `
+                    <div class="text-center text-red-400 py-4">
+                        Failed to load members. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        async function changeMembersPage(delta) {
+            if (isLoading) return; // Prevent spam clicking
+            
+            const newPage = currentPage + delta;
+            if (newPage < 1) return;
+            
+            isLoading = true;
+            currentPage = newPage;
+            await fetchServerMembers(currentServerId, currentPage);
+            isLoading = false;
+        }
+
+        function closeServerModal() {
+            if (isLoading) return; // Prevent closing while loading
+            
+            document.getElementById('serverModal').classList.add('hidden');
+            document.getElementById('serverLoadingOverlay').classList.add('hidden');
+            currentServerId = null;
+            currentPage = 1;
+            isLoading = false;
+            clearTimeout(loadingTimeout);
+        }
+    </script>
+</body>
+</html> 
