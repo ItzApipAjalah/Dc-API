@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Invite Lookup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <script src="/js/navbar.js"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <div id="navbar"></div>
+
+    <script>
+        document.getElementById('navbar').innerHTML = createNavbar();
+        initNavbar();
+    </script>
+
+    <div class="container mx-auto px-4 py-12 mt-16">
+        <!-- Header -->
+        <div class="text-center mb-12 animate-fade">
+            <h1 class="text-5xl font-bold mb-3 gradient-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
+                Discord Invite Lookup
+            </h1>
+            <p class="text-gray-400 text-lg">Get detailed information about Discord invite links</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="max-w-xl mx-auto mb-12">
+            <div class="glass-effect rounded-2xl p-1">
+                <div class="flex flex-col gap-4">
+                    <div class="flex gap-2">
+                        <input type="text" 
+                            id="inviteCode" 
+                            placeholder="Enter Discord Invite Code or URL" 
+                            class="w-full px-6 py-4 rounded-xl bg-gray-800/50 border border-gray-700/50 focus:outline-none focus:border-indigo-500 text-white text-lg transition-all"
+                            onkeypress="if(event.key === 'Enter') showCaptcha()">
+                        <button onclick="showCaptcha()" 
+                            class="px-8 py-4 gradient-bg rounded-xl hover:opacity-90 transition-all font-semibold shadow-lg shadow-indigo-500/20">
+                            Search
+                        </button>
+                    </div>
+                    <!-- Captcha Modal -->
+                    <div id="captchaModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden animate-fade z-[99999] flex items-start justify-center">
+                        <div class="min-h-screen w-full flex items-center justify-center p-4">
+                            <div class="glass-effect rounded-2xl p-6 max-w-md w-full absolute top-[300%] left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                <div class="text-center mb-4">
+                                    <h3 class="text-xl font-semibold">Verify you're human</h3>
+                                    <p class="text-gray-400 text-sm mt-1">Please complete the captcha to continue</p>
+                                </div>
+                                <div class="flex justify-center mb-4">
+                                    <div id="captchaContainer"></div>
+                                </div>
+                                <div class="flex justify-end gap-3">
+                                    <button onclick="closeCaptcha()" 
+                                        class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <button onclick="submitWithCaptcha()" 
+                                        class="px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all">
+                                        Continue
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Card -->
+        <div id="inviteDetails" class="max-w-3xl mx-auto mt-8 hidden animate-fade">
+            <div class="glass-effect rounded-2xl overflow-hidden">
+                <!-- Server Banner -->
+                <div class="relative">
+                    <div class="w-full h-48 bg-gray-800 bg-cover bg-center flex items-center justify-center">
+                        <img id="serverIcon" class="w-32 h-32 rounded-full ring-4 ring-indigo-500/50" src="" alt="Server Icon">
+                    </div>
+                </div>
+
+                <!-- Server Info -->
+                <div class="p-8">
+                    <div class="flex items-baseline gap-3 mb-6">
+                        <h2 id="serverName" class="text-3xl font-bold"></h2>
+                        <span id="inviteCode" class="text-sm text-gray-400 font-mono"></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Overview -->
+                        <div class="glass-effect rounded-xl p-4">
+                            <h3 class="text-lg font-semibold mb-4">Overview</h3>
+                            <div class="space-y-2">
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Members</span>
+                                    <span id="memberCount"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Online</span>
+                                    <span id="onlineCount"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Channel</span>
+                                    <span id="channelName"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Created By</span>
+                                    <span id="inviter"></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Details -->
+                        <div class="glass-effect rounded-xl p-4">
+                            <h3 class="text-lg font-semibold mb-4">Invite Details</h3>
+                            <div class="space-y-2">
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Expires</span>
+                                    <span id="expiresAt"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Max Uses</span>
+                                    <span id="maxUses"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Temporary</span>
+                                    <span id="temporary"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Created</span>
+                                    <span id="createdAt"></span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold mb-4">Server Features</h3>
+                        <div id="serverFeatures" class="flex flex-wrap gap-2">
+                            <!-- Features will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="max-w-md mx-auto mt-6 hidden animate-fade">
+            <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-center">
+                <span id="errorText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let turnstileWidget = null;
+
+        function extractInviteCode(input) {
+            // Handle full URLs
+            const urlMatch = input.match(/discord\.gg\/([a-zA-Z0-9-]+)/);
+            if (urlMatch) return urlMatch[1];
+
+            // Handle discord.com URLs
+            const discordMatch = input.match(/discord\.com\/invite\/([a-zA-Z0-9-]+)/);
+            if (discordMatch) return discordMatch[1];
+
+            // Return as-is if it's just a code
+            return input;
+        }
+
+        function showCaptcha() {
+            const inviteInput = document.getElementById('inviteCode').value;
+            const inviteDetails = document.getElementById('inviteDetails');
+            
+            if (!inviteInput) {
+                document.getElementById('errorText').textContent = 'Please enter a Discord Invite Code or URL';
+                document.getElementById('errorMessage').classList.remove('hidden');
+                return;
+            }
+
+            // Hide the results card when showing captcha
+            inviteDetails.classList.add('hidden');
+            
+            const modal = document.getElementById('captchaModal');
+            modal.classList.remove('hidden');
+
+            // Render the captcha if not already rendered
+            if (!turnstileWidget) {
+                turnstileWidget = turnstile.render('#captchaContainer', {
+                    sitekey: '0x4AAAAAAA2Gb0BUvxr6hYTt',
+                    theme: 'dark'
+                });
+            } else {
+                turnstile.reset(turnstileWidget);
+            }
+        }
+
+        function closeCaptcha() {
+            const modal = document.getElementById('captchaModal');
+            modal.classList.add('hidden');
+            if (turnstileWidget) {
+                turnstile.reset(turnstileWidget);
+            }
+        }
+
+        async function submitWithCaptcha() {
+            const token = turnstile.getResponse(turnstileWidget);
+            if (!token) {
+                return; // Wait for captcha completion
+            }
+            
+            closeCaptcha();
+            await lookupInvite(token);
+        }
+
+        async function lookupInvite(token) {
+            const input = document.getElementById('inviteCode').value;
+            const code = extractInviteCode(input);
+            
+            try {
+                const response = await fetch(`/invites/web/${code}`, {
+                    headers: {
+                        'cf-turnstile-response': token
+                    }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to fetch invite details');
+                }
+
+                // Update UI with invite details
+                document.getElementById('inviteDetails').classList.remove('hidden');
+                document.getElementById('errorMessage').classList.add('hidden');
+
+                // Update server info
+                document.getElementById('serverName').textContent = data.guild.name;
+                document.getElementById('inviteCode').textContent = data.code;
+                document.getElementById('memberCount').textContent = data.guild.memberCount.toLocaleString();
+                document.getElementById('onlineCount').textContent = data.guild.onlineCount.toLocaleString();
+                document.getElementById('channelName').textContent = `#${data.channel.name}`;
+                document.getElementById('inviter').textContent = data.inviter ? 
+                    (data.inviter.globalName || data.inviter.username) : 'Unknown';
+
+                // Update server icon
+                const serverIcon = document.getElementById('serverIcon');
+                serverIcon.src = data.guild.icon || 'default-server-icon.png';
+                serverIcon.alt = `${data.guild.name}'s icon`;
+
+                // Update invite details
+                document.getElementById('expiresAt').textContent = data.expiresAt ? 
+                    new Date(data.expiresAt).toLocaleString() : 'Never';
+                document.getElementById('maxUses').textContent = data.maxUses || 'Unlimited';
+                document.getElementById('temporary').textContent = data.temporary ? 'Yes' : 'No';
+                document.getElementById('createdAt').textContent = data.createdAt ? 
+                    new Date(data.createdAt).toLocaleString() : 'Unknown';
+
+                // Update features
+                const featuresContainer = document.getElementById('serverFeatures');
+                featuresContainer.innerHTML = data.guild.features.map(feature => `
+                    <span class="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 text-sm">
+                        ${formatFeatureName(feature)}
+                    </span>
+                `).join('');
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('inviteDetails').classList.add('hidden');
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('errorText').textContent = message;
+            // Reset captcha on error
+            turnstile.reset();
+        }
+
+        function formatFeatureName(feature) {
+            return feature.toLowerCase()
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        // Add escape key handler for modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCaptcha();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('captchaModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('captchaModal')) {
+                closeCaptcha();
+            }
+        });
+    </script>
+</body>
+</html> 

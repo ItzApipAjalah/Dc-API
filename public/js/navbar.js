@@ -22,6 +22,7 @@ function createNavbar() {
                     <a href="/" class="text-gray-400 hover:text-white">Home</a>
                     <a href="/docs" class="text-gray-400 hover:text-white">API Docs</a>
                     <a href="/server" class="text-gray-400 hover:text-white">Server Lookup</a>
+                    <a href="/invite" class="text-gray-400 hover:text-white">Invite Lookup</a>
                     <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
                         class="flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all text-sm">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -46,6 +47,7 @@ function createNavbar() {
                 <a href="/" class="block text-gray-400 hover:text-white">Home</a>
                 <a href="/docs" class="block text-gray-400 hover:text-white">API Docs</a>
                 <a href="/server" class="block text-gray-400 hover:text-white">Server Lookup</a>
+                <a href="/invite" class="block text-gray-400 hover:text-white">Invite Lookup</a>
                 <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
                     class="flex items-center gap-2 text-gray-400 hover:text-white">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
