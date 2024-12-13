@@ -43,8 +43,8 @@ const getUserDetails = async (req, res) => {
                                 end: activity.timestamps.end || null
                             } : null,
                             assets: activity.assets ? {
-                                largeImage: activity.assets.largeImage || null,
-                                smallImage: activity.assets.smallImage || null,
+                                largeImage: activity.assets.largeImageURL() || null,
+                                smallImage: activity.assets.smallImageURL() || null,
                                 largeText: activity.assets.largeText || null,
                                 smallText: activity.assets.smallText || null
                             } : null

@@ -517,7 +517,7 @@
                 document.getElementById('isBot').textContent = data.isBot ? 'Yes' : 'No';
 
                 // Update activities section
-                if (data.presence && data.presence.activities) {
+                if (data.presence && data.presence.activities && data.presence.activities.length > 0) {
                     document.getElementById('userActivities').innerHTML = `
                         <p class="text-gray-400 text-sm font-medium mb-3">Activities</p>
                         <div class="space-y-3">
@@ -525,17 +525,13 @@
                                 <div class="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
                                     <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700 overflow-hidden">
                                         ${activity.assets?.largeImage ? `
-                                            <img src="${activity.assets.largeImage.startsWith('spotify:') ? 
-                                                activity.assets.largeImage : 
-                                                `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.largeImage}.png`}" 
+                                            <img src="${activity.assets.largeImage}" 
                                                 class="w-full h-full object-cover" 
                                                 alt="${activity.assets.largeText || activity.name}"
                                                 title="${activity.assets.largeText || ''}"
                                             >
                                         ` : activity.assets?.smallImage ? `
-                                            <img src="${activity.assets.smallImage.startsWith('spotify:') ? 
-                                                activity.assets.smallImage : 
-                                                `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.smallImage}.png`}" 
+                                            <img src="${activity.assets.smallImage}" 
                                                 class="w-full h-full object-cover" 
                                                 alt="${activity.assets.smallText || activity.name}"
                                                 title="${activity.assets.smallText || ''}"
@@ -557,18 +553,12 @@
                                         ` : ''}
                                         ${activity.assets?.largeImage ? `
                                             <div class="flex items-center gap-2 mt-2">
-                                                <img src="${activity.assets.largeImage.startsWith('spotify:') ? 
-                                                    activity.assets.largeImage : 
-                                                    `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.largeImage}.png`}" 
-                                                    class="w-8 h-8 rounded" 
+                                                <img src="${activity.assets.largeImage}" class="w-8 h-8 rounded" 
                                                     alt="${activity.assets.largeText || 'Activity image'}"
                                                     title="${activity.assets.largeText || ''}"
                                                 >
                                                 ${activity.assets.smallImage ? `
-                                                    <img src="${activity.assets.smallImage.startsWith('spotify:') ? 
-                                                        activity.assets.smallImage : 
-                                                        `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.smallImage}.png`}" 
-                                                        class="w-6 h-6 rounded" 
+                                                    <img src="${activity.assets.smallImage}" class="w-6 h-6 rounded" 
                                                         alt="${activity.assets.smallText || 'Activity icon'}"
                                                         title="${activity.assets.smallText || ''}"
                                                     >
