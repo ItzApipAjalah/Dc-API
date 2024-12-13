@@ -1,26 +1,8 @@
 const { REST } = require('discord.js');
 const client = require('../config/discord');
-const verifyTurnstile = require('../middleware/recaptcha');
 
 const getInviteInfo = async (req, res) => {
     try {
-        // Verify captcha token from query parameter
-        const token = req.query.token;
-        if (!token) {
-            return res.status(400).json({
-                error: 'Captcha required',
-                message: 'Please complete the captcha verification'
-            });
-        }
-
-        const captchaValid = await verifyTurnstile(token);
-        if (!captchaValid) {
-            return res.status(400).json({
-                error: 'Invalid captcha',
-                message: 'Captcha verification failed'
-            });
-        }
-
         const inviteCode = req.params.code;
         const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 

@@ -203,8 +203,7 @@
                     new Date(data.expiresAt).toLocaleString() : 'Never';
                 document.getElementById('maxUses').textContent = data.maxUses || 'Unlimited';
                 document.getElementById('temporary').textContent = data.temporary ? 'Yes' : 'No';
-                document.getElementById('createdAt').textContent = data.createdAt ? 
-                    new Date(data.createdAt).toLocaleString() : 'Unknown';
+                document.getElementById('createdAt').textContent = new Date(data.createdAt).toLocaleString();
 
                 // Update features
                 const featuresContainer = document.getElementById('serverFeatures');
