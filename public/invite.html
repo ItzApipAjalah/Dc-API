@@ -27,7 +27,6 @@
         }
     </style>
     <script src="/js/navbar.js"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
     <!-- Navbar -->
@@ -56,35 +55,11 @@
                             id="inviteCode" 
                             placeholder="Enter Discord Invite Code or URL" 
                             class="w-full px-6 py-4 rounded-xl bg-gray-800/50 border border-gray-700/50 focus:outline-none focus:border-indigo-500 text-white text-lg transition-all"
-                            onkeypress="if(event.key === 'Enter') showCaptcha()">
-                        <button onclick="showCaptcha()" 
+                            onkeypress="if(event.key === 'Enter') lookupInvite()">
+                        <button onclick="lookupInvite()" 
                             class="px-8 py-4 gradient-bg rounded-xl hover:opacity-90 transition-all font-semibold shadow-lg shadow-indigo-500/20">
                             Search
                         </button>
-                    </div>
-                    <!-- Captcha Modal -->
-                    <div id="captchaModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden animate-fade z-[99999] flex items-start justify-center">
-                        <div class="min-h-screen w-full flex items-center justify-center p-4">
-                            <div class="glass-effect rounded-2xl p-6 max-w-md w-full absolute top-[300%] left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                <div class="text-center mb-4">
-                                    <h3 class="text-xl font-semibold">Verify you're human</h3>
-                                    <p class="text-gray-400 text-sm mt-1">Please complete the captcha to continue</p>
-                                </div>
-                                <div class="flex justify-center mb-4">
-                                    <div id="captchaContainer"></div>
-                                </div>
-                                <div class="flex justify-end gap-3">
-                                    <button onclick="closeCaptcha()" 
-                                        class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">
-                                        Cancel
-                                    </button>
-                                    <button onclick="submitWithCaptcha()" 
-                                        class="px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all">
-                                        Continue
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -175,8 +150,6 @@
     </div>
 
     <script>
-        let turnstileWidget = null;
-
         function extractInviteCode(input) {
             // Handle full URLs
             const urlMatch = input.match(/discord\.gg\/([a-zA-Z0-9-]+)/);
@@ -190,57 +163,17 @@
             return input;
         }
 
-        function showCaptcha() {
-            const inviteInput = document.getElementById('inviteCode').value;
-            const inviteDetails = document.getElementById('inviteDetails');
-            
-            if (!inviteInput) {
-                document.getElementById('errorText').textContent = 'Please enter a Discord Invite Code or URL';
-                document.getElementById('errorMessage').classList.remove('hidden');
+        async function lookupInvite() {
+            const input = document.getElementById('inviteCode').value;
+            if (!input) {
+                showError('Please enter an invite code or URL');
                 return;
             }
 
-            // Hide the results card when showing captcha
-            inviteDetails.classList.add('hidden');
-            
-            const modal = document.getElementById('captchaModal');
-            modal.classList.remove('hidden');
-
-            // Render the captcha if not already rendered
-            if (!turnstileWidget) {
-                turnstileWidget = turnstile.render('#captchaContainer', {
-                    sitekey: '0x4AAAAAAA2Gb0BUvxr6hYTt',
-                    theme: 'dark'
-                });
-            } else {
-                turnstile.reset(turnstileWidget);
-            }
-        }
-
-        function closeCaptcha() {
-            const modal = document.getElementById('captchaModal');
-            modal.classList.add('hidden');
-            if (turnstileWidget) {
-                turnstile.reset(turnstileWidget);
-            }
-        }
-
-        async function submitWithCaptcha() {
-            const token = turnstile.getResponse(turnstileWidget);
-            if (!token) {
-                return; // Wait for captcha completion
-            }
-            
-            closeCaptcha();
-            await lookupInvite(token);
-        }
-
-        async function lookupInvite(token) {
-            const input = document.getElementById('inviteCode').value;
             const code = extractInviteCode(input);
             
             try {
-                const response = await fetch(`/invites/web/${code}?token=${token}`);
+                const response = await fetch(`/invites/api/${code}`);
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -290,8 +223,6 @@
             document.getElementById('inviteDetails').classList.add('hidden');
             document.getElementById('errorMessage').classList.remove('hidden');
             document.getElementById('errorText').textContent = message;
-            // Reset captcha on error
-            turnstile.reset();
         }
 
         function formatFeatureName(feature) {
@@ -300,20 +231,6 @@
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ');
         }
-
-        // Add escape key handler for modal
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeCaptcha();
-            }
-        });
-
-        // Close modal when clicking outside
-        document.getElementById('captchaModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('captchaModal')) {
-                closeCaptcha();
-            }
-        });
     </script>
 </body>
 </html> 
