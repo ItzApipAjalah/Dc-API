@@ -517,7 +517,7 @@
                 document.getElementById('isBot').textContent = data.isBot ? 'Yes' : 'No';
 
                 // Update activities section
-                if (data.presence && data.presence.activities && data.presence.activities.length > 0) {
+                if (data.presence && data.presence.activities) {
                     document.getElementById('userActivities').innerHTML = `
                         <p class="text-gray-400 text-sm font-medium mb-3">Activities</p>
                         <div class="space-y-3">
