@@ -523,29 +523,21 @@
                         <div class="space-y-3">
                             ${data.presence.activities.map(activity => `
                                 <div class="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
-                                    ${activity.assets ? `
-                                        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700 overflow-hidden">
-                                            ${activity.assets.largeImage ? `
-                                                <img src="${activity.assets.largeImage}" 
-                                                    class="w-full h-full object-cover" 
-                                                    alt="${activity.assets.largeText || activity.name}"
-                                                    title="${activity.assets.largeText || ''}"
-                                                    onerror="this.onerror=null; this.src='${activity.assets.smallImage || ''}'; if(!this.src) this.parentElement.innerHTML='${getActivityTypeIcon(activity.type)}'"
-                                                >
-                                            ` : activity.assets.smallImage ? `
-                                                <img src="${activity.assets.smallImage}" 
-                                                    class="w-full h-full object-cover" 
-                                                    alt="${activity.assets.smallText || activity.name}"
-                                                    title="${activity.assets.smallText || ''}"
-                                                    onerror="this.onerror=null; this.parentElement.innerHTML='${getActivityTypeIcon(activity.type)}'"
-                                                >
-                                            ` : `<div class="text-2xl">${getActivityTypeIcon(activity.type)}</div>`}
-                                        </div>
-                                    ` : `
-                                        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700">
-                                            <div class="text-2xl">${getActivityTypeIcon(activity.type)}</div>
-                                        </div>
-                                    `}
+                                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700 overflow-hidden">
+                                        ${activity.assets?.largeImage ? `
+                                            <img src="${activity.assets.largeImage}" 
+                                                class="w-full h-full object-cover" 
+                                                alt="${activity.assets.largeText || activity.name}"
+                                                title="${activity.assets.largeText || ''}"
+                                            >
+                                        ` : activity.assets?.smallImage ? `
+                                            <img src="${activity.assets.smallImage}" 
+                                                class="w-full h-full object-cover" 
+                                                alt="${activity.assets.smallText || activity.name}"
+                                                title="${activity.assets.smallText || ''}"
+                                            >
+                                        ` : ''}
+                                    </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium">${activity.name}</span>

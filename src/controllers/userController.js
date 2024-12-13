@@ -43,10 +43,8 @@ const getUserDetails = async (req, res) => {
                                 end: activity.timestamps.end || null
                             } : null,
                             assets: activity.assets ? {
-                                largeImage: activity.assets.largeImageURL?.() || 
-                                           (activity.assets.largeImage ? `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.largeImage}.png` : null),
-                                smallImage: activity.assets.smallImageURL?.() || 
-                                           (activity.assets.smallImage ? `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.smallImage}.png` : null),
+                                largeImage: activity.assets.largeImageURL() || null,
+                                smallImage: activity.assets.smallImageURL() || null,
                                 largeText: activity.assets.largeText || null,
                                 smallText: activity.assets.smallText || null
                             } : null
