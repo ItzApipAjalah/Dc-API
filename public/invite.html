@@ -240,11 +240,7 @@
             const code = extractInviteCode(input);
             
             try {
-                const response = await fetch(`/invites/web/${code}`, {
-                    headers: {
-                        'cf-turnstile-response': token
-                    }
-                });
+                const response = await fetch(`/invites/web/${code}?token=${token}`);
                 const data = await response.json();
 
                 if (!response.ok) {
