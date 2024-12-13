@@ -521,34 +521,38 @@
                     document.getElementById('userActivities').innerHTML = `
                         <p class="text-gray-400 text-sm font-medium mb-3">Activities</p>
                         <div class="space-y-3">
-                            ${data.presence.activities.map(activity => `
-                                <div class="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
-                                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700 overflow-hidden">
-                                        ${activity.assets && activity.assets.largeImage ? `
-                                            <img src="${activity.assets.largeImage}" 
-                                                class="w-full h-full object-cover" 
-                                                alt="${activity.assets.largeText || activity.name}"
-                                                title="${activity.assets.largeText || ''}"
-                                                onerror="console.log('Image failed to load:', this.src)"
-                                            >
-                                        ` : ''}
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-medium">${activity.name}</span>
-                                            ${activity.type !== 4 ? `
-                                                <span class="text-xs text-gray-400">${formatActivityType(activity.type)}</span>
+                            ${data.presence.activities.map(activity => {
+                                console.log('Activity assets:', activity.assets); // Debug log
+                                return `
+                                    <div class="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
+                                        <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700 overflow-hidden">
+                                            ${activity.assets?.largeImage ? `
+                                                <img src="${activity.assets.largeImage}" 
+                                                    class="w-full h-full object-cover" 
+                                                    alt="${activity.assets.largeText || activity.name}"
+                                                    title="${activity.assets.largeText || ''}"
+                                                    onerror="console.log('Failed to load image:', this.src)"
+                                                    onload="console.log('Successfully loaded image:', this.src)"
+                                                >
                                             ` : ''}
                                         </div>
-                                        ${activity.state ? `
-                                            <p class="text-sm text-gray-400 truncate">${activity.state}</p>
-                                        ` : ''}
-                                        ${activity.details ? `
-                                            <p class="text-sm text-gray-400 truncate">${activity.details}</p>
-                                        ` : ''}
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-medium">${activity.name}</span>
+                                                ${activity.type !== 4 ? `
+                                                    <span class="text-xs text-gray-400">${formatActivityType(activity.type)}</span>
+                                                ` : ''}
+                                            </div>
+                                            ${activity.state ? `
+                                                <p class="text-sm text-gray-400 truncate">${activity.state}</p>
+                                            ` : ''}
+                                            ${activity.details ? `
+                                                <p class="text-sm text-gray-400 truncate">${activity.details}</p>
+                                            ` : ''}
+                                        </div>
                                     </div>
-                                </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     `;
                 } else {
