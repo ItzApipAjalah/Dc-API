@@ -201,12 +201,29 @@
         <div class="h-full flex flex-col pt-16">
             <!-- Sidebar Header -->
             <div class="p-4 border-b border-gray-700/50">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-2">
                     <h2 class="text-lg font-semibold">Search History</h2>
-                    <button onclick="clearHistory()" 
-                        class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-all">
-                        Clear All
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="importHistory()" 
+                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all tooltip"
+                            data-tooltip="Import history">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                        </button>
+                        <button onclick="exportHistory()" 
+                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all tooltip"
+                            data-tooltip="Export history">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                        </button>
+                        <button onclick="clearHistory()" 
+                            class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-all tooltip"
+                            data-tooltip="Clear all history">
+                            Clear All
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -415,137 +432,59 @@
             await fetchUserDetails(token);
         }
 
-        // Update fetchUserDetails to accept token parameter
-        async function fetchUserDetails(token) {
-            const userIdInput = document.getElementById('userId').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const userDetails = document.getElementById('userDetails');
-            const resultsLoading = document.getElementById('resultsLoading');
-            
+        // Update fetchUserDetails to save to history
+        const originalFetchUserDetails = fetchUserDetails;
+        fetchUserDetails = async (token) => {
             try {
-                errorMessage.classList.add('hidden');
-                userDetails.classList.add('hidden');
-                resultsLoading.classList.remove('hidden');
-
-                // First try the mutual server endpoint
-                let response = await fetch(`/users/web/${userIdInput}`, {
+                const userIdInput = document.getElementById('userId').value;
+                const response = await fetch(`/users/web/${userIdInput}`, {
                     headers: {
                         'cf-turnstile-response': token
                     }
                 });
-                let data = await response.json();
+                const data = await response.json();
 
-                // If user not found in mutual servers, try public lookup
-                if (!response.ok && response.status === 404) {
-                    response = await fetch(`/users/web/lookup/${userIdInput}`, {
-                        headers: {
-                            'cf-turnstile-response': token
-                        }
-                    });
-                    data = await response.json();
+                // Only save to history if the fetch was successful
+                if (response.ok) {
+                    saveToHistory(userIdInput, data.username, data.avatarURL);
                 }
 
-                if (!response.ok) {
-                    throw new Error(data.message || 'Failed to fetch user details');
-                }
-
-                // Update UI with user details
-                document.getElementById('userBanner').style.backgroundImage = 
-                    data.bannerURL ? `url('${data.bannerURL}')` : 'none';
-                document.getElementById('userAvatar').src = 
-                    data.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png';
-                document.getElementById('userName').textContent = data.username;
-                document.getElementById('userId').textContent = data.id;
-                document.getElementById('globalName').textContent = data.globalName || 'None';
-                document.getElementById('createdAt').textContent = new Date(data.createdAt).toLocaleDateString();
-                
-                // Update status section based on whether user is in mutual server
-                if (data.presence) {
-                    document.getElementById('userStatus').innerHTML = 
-                        `${getStatusIcon(data.presence.status)} ${data.presence.status}`;
-                } else {
-                    document.getElementById('userStatus').innerHTML = 
-                        '<span class="text-gray-400">Not in mutual server</span>';
-                }
-                
-                document.getElementById('isBot').textContent = data.isBot ? 'Yes' : 'No';
-
-                // Update activities section
-                const activitiesContainer = document.getElementById('userActivities');
-                if (data.presence?.activities && data.presence.activities.length > 0) {
-                    activitiesContainer.innerHTML = data.presence.activities.map(activity => `
-                        <div class="glass-effect rounded-xl p-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-2xl">${getActivityTypeIcon(activity.type)}</span>
-                                    <span class="font-semibold">${activity.name}</span>
-                                </div>
-                                <span class="text-sm text-indigo-400 font-medium px-3 py-1 bg-indigo-400/10 rounded-full">
-                                    ${activity.type}
-                                </span>
-                            </div>
-                            ${activity.state ? `
-                                <div class="mt-3 text-gray-300">
-                                    ${activity.state}
-                                </div>
-                            ` : ''}
-                            ${activity.details ? `
-                                <div class="mt-1 text-gray-400">
-                                    ${activity.details}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('');
-                } else {
-                    activitiesContainer.innerHTML = `
-                        <div class="glass-effect rounded-xl p-6 text-gray-400 text-center">
-                            ${data.presence ? 'No activities' : 'Activities unavailable'}
-                        </div>
-                    `;
-                }
-
-                // Update mutual servers section
-                const mutualServersContainer = document.getElementById('mutualServers');
-                if (data.mutualGuilds && data.mutualGuilds.length > 0) {
-                    mutualServersContainer.innerHTML = data.mutualGuilds.map(guild => `
-                        <div onclick="showServerDetails('${guild.id}')" 
-                            class="glass-effect rounded-xl p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer">
-                            ${guild.icon ? 
-                                `<img src="${guild.icon}" class="w-10 h-10 rounded-xl">` : 
-                                '<div class="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center text-lg font-bold">' + guild.name.charAt(0) + '</div>'
-                            }
-                            <div class="flex-1 min-w-0">
-                                <p class="font-medium truncate">${guild.name}</p>
-                                ${guild.member.nickname ? 
-                                    `<p class="text-sm text-gray-400 truncate">Nickname: ${guild.member.nickname}</p>` : 
-                                    ''
-                                }
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    mutualServersContainer.innerHTML = `
-                        <div class="col-span-2 glass-effect rounded-xl p-6 text-center">
-                            <p class="text-gray-400 mb-4">No mutual servers</p>
-                            <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
-                                class="inline-flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026c.462-.62.874-1.275 1.226-1.963.021-.04.001-.088-.041-.104a13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.245.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z"/>
-                                </svg>
-                                Join Our Server
-                            </a>
-                        </div>
-                    `;
-                }
-
-                resultsLoading.classList.add('hidden');
-                userDetails.classList.remove('hidden');
+                // Call the original function to handle the UI updates
+                await originalFetchUserDetails(token);
             } catch (error) {
-                document.getElementById('errorText').textContent = error.message;
-                errorMessage.classList.remove('hidden');
-                userDetails.classList.add('hidden');
-                resultsLoading.classList.add('hidden');
+                console.error('Error fetching user details:', error);
+                // Handle error appropriately
             }
+        };
+
+        // Update saveToHistory function to handle null checks
+        function saveToHistory(userId, username, avatarUrl) {
+            if (!userId || !username || !avatarUrl) {
+                console.warn('Invalid data for history:', { userId, username, avatarUrl });
+                return;
+            }
+
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            
+            // Remove duplicate if exists
+            history = history.filter(item => item.userId !== userId);
+            
+            // Add new search to beginning
+            history.unshift({
+                userId,
+                username,
+                avatarUrl,
+                timestamp: new Date().toISOString(),
+                pinned: false // Initialize pinned state
+            });
+            
+            // Keep only MAX_HISTORY_ITEMS
+            if (history.length > MAX_HISTORY_ITEMS) {
+                history = history.slice(0, MAX_HISTORY_ITEMS);
+            }
+            
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            updateHistorySidebar();
         }
 
         let currentServerId = null;
@@ -750,29 +689,6 @@
         // Add these functions for search history
         const MAX_HISTORY_ITEMS = 10;
 
-        function saveToHistory(userId, username, avatarUrl) {
-            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-            
-            // Remove duplicate if exists
-            history = history.filter(item => item.userId !== userId);
-            
-            // Add new search to beginning
-            history.unshift({
-                userId,
-                username,
-                avatarUrl,
-                timestamp: new Date().toISOString()
-            });
-            
-            // Keep only MAX_HISTORY_ITEMS
-            if (history.length > MAX_HISTORY_ITEMS) {
-                history = history.slice(0, MAX_HISTORY_ITEMS);
-            }
-            
-            localStorage.setItem('searchHistory', JSON.stringify(history));
-            updateHistorySidebar();
-        }
-
         function clearHistory() {
             localStorage.removeItem('searchHistory');
             updateHistorySidebar();
@@ -792,15 +708,35 @@
             }
             
             historyContainer.innerHTML = history.map(item => `
-                <div class="glass-effect rounded-lg p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer"
-                    onclick="searchFromHistory('${item.userId}')">
+                <div class="glass-effect rounded-lg p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all group">
                     <img src="${item.avatarUrl}" class="w-10 h-10 rounded-full" alt="${item.username}'s avatar">
-                    <div class="flex-1 min-w-0">
-                        <p class="font-medium truncate">${item.username}</p>
+                    <div class="flex-1 min-w-0 cursor-pointer" onclick="searchFromHistory('${item.userId}')">
+                        <div class="flex items-center gap-2">
+                            <p class="font-medium truncate">${item.username}</p>
+                            ${item.pinned ? '<span class="text-yellow-500"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.828.722a.5.5 0 01.354 0l7.071 7.071a.5.5 0 010 .707l-7.071 7.071a.5.5 0 01-.707 0L2.404 8.5a.5.5 0 010-.707L9.475.722z"/></svg></span>' : ''}
+                        </div>
                         <p class="text-sm text-gray-400 truncate">${item.userId}</p>
                     </div>
-                    <div class="text-xs text-gray-400">
-                        ${formatTimeAgo(new Date(item.timestamp))}
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400">
+                            ${formatTimeAgo(new Date(item.timestamp))}
+                        </span>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="togglePin('${item.userId}')" 
+                                class="p-1 rounded hover:bg-gray-700/50 tooltip" 
+                                data-tooltip="${item.pinned ? 'Unpin' : 'Pin'}">
+                                <svg class="w-4 h-4 ${item.pinned ? 'text-yellow-500' : 'text-gray-400'}" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.828.722a.5.5 0 01.354 0l7.071 7.071a.5.5 0 010 .707l-7.071 7.071a.5.5 0 01-.707 0L2.404 8.5a.5.5 0 010-.707L9.475.722z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deleteHistoryItem('${item.userId}')" 
+                                class="p-1 rounded hover:bg-gray-700/50 tooltip" 
+                                data-tooltip="Delete">
+                                <svg class="w-4 h-4 text-gray-400 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -820,21 +756,6 @@
             if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
             return `${Math.floor(diffInSeconds / 86400)}d ago`;
         }
-
-        // Update fetchUserDetails to save to history
-        const originalFetchUserDetails = fetchUserDetails;
-        fetchUserDetails = async (token) => {
-            await originalFetchUserDetails(token);
-            
-            // Save to history after successful fetch
-            const userIdInput = document.getElementById('userId').value;
-            const username = document.getElementById('userName').textContent;
-            const avatarUrl = document.getElementById('userAvatar').src;
-            
-            if (username && avatarUrl) {
-                saveToHistory(userIdInput, username, avatarUrl);
-            }
-        };
 
         // Initialize history on page load
         document.addEventListener('DOMContentLoaded', updateHistorySidebar);
@@ -888,6 +809,73 @@
                 document.documentElement.classList.add('dark');
                 localStorage.theme = 'dark';
             }
+        }
+
+        // Add these new functions for history features
+        function togglePin(userId) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            const itemIndex = history.findIndex(item => item.userId === userId);
+            
+            if (itemIndex !== -1) {
+                history[itemIndex].pinned = !history[itemIndex].pinned;
+                
+                // Sort history: pinned items first, then by timestamp
+                history.sort((a, b) => {
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+                
+                localStorage.setItem('searchHistory', JSON.stringify(history));
+                updateHistorySidebar();
+            }
+        }
+
+        function deleteHistoryItem(userId) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            history = history.filter(item => item.userId !== userId);
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
+
+        function exportHistory() {
+            const history = localStorage.getItem('searchHistory') || '[]';
+            const blob = new Blob([history], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'discord-lookup-history.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importHistory() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = event => {
+                    try {
+                        const importedHistory = JSON.parse(event.target.result);
+                        if (Array.isArray(importedHistory)) {
+                            localStorage.setItem('searchHistory', JSON.stringify(importedHistory));
+                            updateHistorySidebar();
+                        }
+                    } catch (error) {
+                        console.error('Invalid history file:', error);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
     </script>
 </body>
