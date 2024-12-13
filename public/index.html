@@ -282,8 +282,16 @@
 
             try {
                 errorMessage.classList.add('hidden');
-                const response = await fetch(`/users/${userIdInput}`);
-                const data = await response.json();
+                
+                // First try the mutual server endpoint
+                let response = await fetch(`/users/${userIdInput}`);
+                let data = await response.json();
+
+                // If user not found in mutual servers, try public lookup
+                if (!response.ok && response.status === 404) {
+                    response = await fetch(`/users/lookup/${userIdInput}`);
+                    data = await response.json();
+                }
 
                 if (!response.ok) {
                     throw new Error(data.message || 'Failed to fetch user details');
@@ -298,10 +306,19 @@
                 document.getElementById('userId').textContent = data.id;
                 document.getElementById('globalName').textContent = data.globalName || 'None';
                 document.getElementById('createdAt').textContent = new Date(data.createdAt).toLocaleDateString();
-                document.getElementById('userStatus').innerHTML = `${getStatusIcon(data.presence?.status || 'offline')} ${data.presence?.status || 'offline'}`;
+                
+                // Update status section based on whether user is in mutual server
+                if (data.presence) {
+                    document.getElementById('userStatus').innerHTML = 
+                        `${getStatusIcon(data.presence.status)} ${data.presence.status}`;
+                } else {
+                    document.getElementById('userStatus').innerHTML = 
+                        '<span class="text-gray-400">Not in mutual server</span>';
+                }
+                
                 document.getElementById('isBot').textContent = data.isBot ? 'Yes' : 'No';
 
-                // Update activities
+                // Update activities section
                 const activitiesContainer = document.getElementById('userActivities');
                 if (data.presence?.activities && data.presence.activities.length > 0) {
                     activitiesContainer.innerHTML = data.presence.activities.map(activity => `
@@ -311,7 +328,9 @@
                                     <span class="text-2xl">${getActivityTypeIcon(activity.type)}</span>
                                     <span class="font-semibold">${activity.name}</span>
                                 </div>
-                                <span class="text-sm text-indigo-400 font-medium px-3 py-1 bg-indigo-400/10 rounded-full">${activity.type}</span>
+                                <span class="text-sm text-indigo-400 font-medium px-3 py-1 bg-indigo-400/10 rounded-full">
+                                    ${activity.type}
+                                </span>
                             </div>
                             ${activity.state ? `
                                 <div class="mt-3 text-gray-300">
@@ -328,29 +347,37 @@
                 } else {
                     activitiesContainer.innerHTML = `
                         <div class="glass-effect rounded-xl p-6 text-gray-400 text-center">
-                            No activities
+                            ${data.presence ? 'No activities' : 'Activities unavailable'}
                         </div>
                     `;
                 }
 
-                // Update mutual servers
+                // Update mutual servers section
                 const mutualServersContainer = document.getElementById('mutualServers');
-                mutualServersContainer.innerHTML = data.mutualGuilds.map(guild => `
-                    <div onclick="showServerDetails('${guild.id}')" 
-                        class="glass-effect rounded-xl p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer">
-                        ${guild.icon ? 
-                            `<img src="${guild.icon}" class="w-10 h-10 rounded-xl">` : 
-                            '<div class="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center text-lg font-bold">' + guild.name.charAt(0) + '</div>'
-                        }
-                        <div class="flex-1 min-w-0">
-                            <p class="font-medium truncate">${guild.name}</p>
-                            ${guild.member.nickname ? 
-                                `<p class="text-sm text-gray-400 truncate">Nickname: ${guild.member.nickname}</p>` : 
-                                ''
+                if (data.mutualGuilds && data.mutualGuilds.length > 0) {
+                    mutualServersContainer.innerHTML = data.mutualGuilds.map(guild => `
+                        <div onclick="showServerDetails('${guild.id}')" 
+                            class="glass-effect rounded-xl p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer">
+                            ${guild.icon ? 
+                                `<img src="${guild.icon}" class="w-10 h-10 rounded-xl">` : 
+                                '<div class="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center text-lg font-bold">' + guild.name.charAt(0) + '</div>'
                             }
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium truncate">${guild.name}</p>
+                                ${guild.member.nickname ? 
+                                    `<p class="text-sm text-gray-400 truncate">Nickname: ${guild.member.nickname}</p>` : 
+                                    ''
+                                }
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `).join('');
+                } else {
+                    mutualServersContainer.innerHTML = `
+                        <div class="col-span-2 glass-effect rounded-xl p-6 text-gray-400 text-center">
+                            No mutual servers
+                        </div>
+                    `;
+                }
 
                 userDetails.classList.remove('hidden');
             } catch (error) {
@@ -489,19 +516,29 @@
                                         <span class="px-2 py-0.5 rounded-full text-xs bg-indigo-500/20 text-indigo-300">BOT</span>
                                     ` : ''}
                                 </div>
-                                <div class="flex items-center gap-2 text-sm text-gray-400">
+                                <div class="flex items-center gap-2 text-sm">
                                     <span>${getStatusIcon(member.status)}</span>
                                     ${member.globalName ? `
-                                        <span>${member.globalName}</span>
+                                        <span class="text-gray-400">${member.globalName}</span>
+                                    ` : ''}
+                                    ${member.highestRole ? `
+                                        <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: ${member.highestRole.color}20; color: ${member.highestRole.color}">
+                                            ${member.highestRole.name}
+                                        </span>
                                     ` : ''}
                                 </div>
                             </div>
                         </div>
-                        ${member.activities && member.activities.length > 0 ? `
-                            <div class="hidden group-hover:block text-sm text-gray-400">
-                                ${member.activities[0].name}
-                            </div>
-                        ` : ''}
+                        <div class="flex items-center gap-2">
+                            ${member.activities && member.activities.length > 0 ? `
+                                <div class="hidden group-hover:block text-sm text-gray-400">
+                                    ${member.activities[0].name}
+                                </div>
+                            ` : ''}
+                            ${member.roles.length > 1 ? `
+                                <span class="text-xs text-gray-400">+${member.roles.length - 1} roles</span>
+                            ` : ''}
+                        </div>
                     </div>
                 `).join('');
 

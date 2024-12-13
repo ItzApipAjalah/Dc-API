@@ -183,55 +183,87 @@ app.get('/servers/:id/members', async (req, res) => {
             });
         }
 
-        // Get query parameters with fixed limit of 5
+        // Get query parameters
         const page = parseInt(req.query.page) || 1;
         const limit = 5; // Fixed limit of 5 members per page
+
+        // Fetch all members first (if not already cached)
+        await guild.members.fetch();
         
+        // Get total members for pagination
+        const totalMembers = guild.members.cache.size;
+        
+        // Sort members by highest role position
+        const sortedMembers = Array.from(guild.members.cache.values())
+            .sort((a, b) => {
+                // Get highest role position for each member
+                const aHighestRole = a.roles.cache.size > 1 
+                    ? Math.max(...a.roles.cache.map(role => role.position))
+                    : 0;
+                const bHighestRole = b.roles.cache.size > 1 
+                    ? Math.max(...b.roles.cache.map(role => role.position))
+                    : 0;
+                
+                // Sort by role position (highest first)
+                if (bHighestRole !== aHighestRole) {
+                    return bHighestRole - aHighestRole;
+                }
+                
+                // If same role position, sort by username
+                return a.user.username.localeCompare(b.user.username);
+            });
+
+        // Calculate pagination
         const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
-
-        // Get only the members we need for this page
-        const members = await guild.members.fetch({ 
-            limit: limit,
-            after: startIndex > 0 ? startIndex - 1 : '0'
-        });
-
-        const memberArray = Array.from(members.values());
-
-        const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+        const endIndex = startIndex + limit;
+        
+        // Get paginated members
+        const memberArray = sortedMembers.slice(startIndex, endIndex);
 
         const memberDetails = await Promise.all(memberArray.map(async member => {
             try {
-                // Fetch detailed user data
-                const userData = await rest.get(`/users/${member.user.id}`);
+                const userData = await member.user.fetch();
                 const presence = member.presence;
                 
+                // Get member's roles (excluding @everyone)
+                const roles = member.roles.cache
+                    .filter(role => role.id !== guild.id)
+                    .sort((a, b) => b.position - a.position)
+                    .map(role => ({
+                        id: role.id,
+                        name: role.name,
+                        color: role.hexColor,
+                        position: role.position
+                    }));
+
                 return {
                     id: member.id,
-                    username: userData.username || member.user.username,
-                    globalName: userData.global_name || member.user.globalName || null,
+                    username: userData.username,
+                    globalName: userData.globalName || null,
                     nickname: member.nickname,
-                    discriminator: userData.discriminator || member.user.discriminator,
+                    discriminator: userData.discriminator,
                     joinedAt: member.joinedAt,
-                    isBot: userData.bot || member.user.bot,
-                    avatarURL: member.user.displayAvatarURL({ 
+                    isBot: userData.bot,
+                    avatarURL: userData.displayAvatarURL({ 
                         dynamic: true, 
                         size: 4096 
                     }),
-                    bannerURL: userData.banner ? 
-                        `https://cdn.discordapp.com/banners/${userData.id}/${userData.banner}.${userData.banner.startsWith('a_') ? 'gif' : 'png'}?size=4096` 
-                        : null,
-                    accentColor: userData.accent_color || null,
+                    bannerURL: userData.bannerURL({ 
+                        dynamic: true, 
+                        size: 4096 
+                    }),
+                    accentColor: userData.accentColor,
                     status: presence?.status || 'offline',
                     activities: presence?.activities?.map(activity => ({
                         name: activity.name,
                         type: activity.type,
                         state: activity.state || null
-                    })) || []
+                    })) || [],
+                    roles: roles, // Add sorted roles to response
+                    highestRole: roles[0] || null // Add highest role for easy access
                 };
             } catch (error) {
                 console.warn(`Failed to fetch detailed data for user ${member.user.id}:`, error);
-                // Return basic data if detailed fetch fails
                 return {
                     id: member.id,
                     username: member.user.username,
@@ -246,26 +278,24 @@ app.get('/servers/:id/members', async (req, res) => {
                         name: activity.name,
                         type: activity.type,
                         state: activity.state
-                    })) || []
+                    })) || [],
+                    roles: [], // Empty roles array for failed fetches
+                    highestRole: null
                 };
             }
         }));
 
+        const totalPages = Math.ceil(totalMembers / limit);
+
         const response = {
-            total: guild.memberCount,
+            total: totalMembers,
             page,
             limit,
-            totalPages: Math.ceil(guild.memberCount / limit),
+            totalPages,
+            nextPage: page < totalPages ? page + 1 : null,
+            previousPage: page > 1 ? page - 1 : null,
             members: memberDetails
         };
-
-        if (endIndex < guild.memberCount) {
-            response.nextPage = page + 1;
-        }
-
-        if (startIndex > 0) {
-            response.previousPage = page - 1;
-        }
 
         res.json(response);
     } catch (error) {
@@ -363,6 +393,59 @@ app.get('/users/:userid', async (req, res) => {
             });
         }
 
+        res.status(500).json({
+            error: 'Failed to fetch user details',
+            message: error.message
+        });
+    }
+});
+
+// Add new endpoint for public user lookup
+app.get('/users/lookup/:userid', async (req, res) => {
+    try {
+        const userId = req.params.userid;
+        const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+
+        try {
+            // Try to fetch user data from Discord API
+            const userData = await rest.get(`/users/${userId}`);
+
+            const response = {
+                id: userData.id,
+                username: userData.username,
+                globalName: userData.global_name || null,
+                discriminator: userData.discriminator || '0',
+                avatarURL: userData.avatar ? 
+                    `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}${userData.avatar.startsWith('a_') ? '.gif' : '.png'}?size=4096` 
+                    : null,
+                bannerURL: userData.banner ? 
+                    `https://cdn.discordapp.com/banners/${userData.id}/${userData.banner}${userData.banner.startsWith('a_') ? '.gif' : '.png'}?size=4096` 
+                    : null,
+                accentColor: userData.accent_color,
+                flags: {
+                    value: userData.flags,
+                    names: Object.keys(userData.public_flags || {})
+                },
+                createdAt: new Date(Number((BigInt(userData.id) >> 22n)) + 1420070400000),
+                isBot: userData.bot || false,
+                avatarDecoration: userData.avatar_decoration,
+                premiumType: userData.premium_type,
+                isInMutualServer: false
+            };
+
+            res.json(response);
+        } catch (apiError) {
+            // If user not found in Discord API
+            if (apiError.code === 10013) {
+                return res.status(404).json({
+                    error: 'User not found',
+                    message: 'The specified user ID does not exist'
+                });
+            }
+            throw apiError;
+        }
+    } catch (error) {
+        console.error('Error in public user lookup:', error);
         res.status(500).json({
             error: 'Failed to fetch user details',
             message: error.message
