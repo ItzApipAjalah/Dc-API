@@ -5,22 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord User Lookup</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            900: '#111827',
-                            800: '#1F2937',
-                            700: '#374151'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="/utils/helpers.js"></script>
@@ -29,13 +13,9 @@
             font-family: 'Inter', sans-serif;
         }
         .glass-effect {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .dark .glass-effect {
             background: rgba(17, 24, 39, 0.7);
-            border-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .gradient-bg {
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
@@ -54,17 +34,13 @@
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(229, 231, 235, 0.3);
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-track {
             background: rgba(17, 24, 39, 0.3);
+            border-radius: 4px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: rgba(99, 102, 241, 0.5);
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -80,75 +56,9 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-
-        .tooltip {
-            position: relative;
-        }
-        
-        .tooltip:before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 0.5rem;
-            background: rgba(17, 24, 39, 0.9);
-            color: white;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.2s ease;
-        }
-        
-        .tooltip:hover:before {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-0.25rem);
-        }
-
-        .transition-all {
-            transition-property: all;
-            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-            transition-duration: 150ms;
-        }
-        
-        .fade-enter {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        
-        .fade-enter-active {
-            opacity: 1;
-            transform: translateY(0);
-            transition: opacity 300ms, transform 300ms;
-        }
-        
-        .fade-exit {
-            opacity: 1;
-        }
-        
-        .fade-exit-active {
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: opacity 300ms, transform 300ms;
-        }
     </style>
-    <script>
-        // Theme handling
-        function initTheme() {
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
-        
-        // Initialize theme on load
-        initTheme();
-    </script>
 </head>
-<body class="bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white min-h-screen">
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
     <!-- Navbar -->
     <nav class="fixed top-0 left-0 right-0 z-[999] glass-effect border-b border-gray-700/50">
         <div class="container mx-auto px-4">
@@ -169,21 +79,11 @@
                 
                 <!-- Right side -->
                 <div class="flex items-center gap-4">
-                    <button onclick="toggleTheme()" 
-                        class="tooltip" 
-                        data-tooltip="Toggle theme"
-                        aria-label="Toggle dark mode">
-                        <!-- Sun icon (shown in dark mode) -->
-                        <svg class="w-5 h-5 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
-                        </svg>
-                        <!-- Moon icon (shown in light mode) -->
-                        <svg class="w-5 h-5 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
-                        </svg>
-                    </button>
                     <a href="/" class="text-gray-400 hover:text-white">Home</a>
                     <a href="/docs.html" class="text-gray-400 hover:text-white">API Docs</a>
+                    <button onclick="clearHistory()" class="text-gray-400 hover:text-white text-sm">
+                        Clear History
+                    </button>
                     <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
                         class="hidden lg:flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all text-sm">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -201,30 +101,7 @@
         <div class="h-full flex flex-col pt-16">
             <!-- Sidebar Header -->
             <div class="p-4 border-b border-gray-700/50">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-lg font-semibold">Search History</h2>
-                    <div class="flex items-center gap-2">
-                        <button onclick="importHistory()" 
-                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all tooltip"
-                            data-tooltip="Import history">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                            </svg>
-                        </button>
-                        <button onclick="exportHistory()" 
-                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all tooltip"
-                            data-tooltip="Export history">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                            </svg>
-                        </button>
-                        <button onclick="clearHistory()" 
-                            class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-all tooltip"
-                            data-tooltip="Clear all history">
-                            Clear All
-                        </button>
-                    </div>
-                </div>
+                <h2 class="text-lg font-semibold">Search History</h2>
             </div>
             
             <!-- History List -->
@@ -238,7 +115,7 @@
     <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[997] lg:hidden hidden"></div>
 
     <!-- Update the container div to account for navbar and sidebar -->
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:pl-80 mt-16">
+    <div class="container mx-auto px-4 py-12 lg:pl-80 mt-16">
         <!-- Header -->
         <div class="text-center mb-12 animate-fade">
             <h1 class="text-5xl font-bold mb-3 gradient-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
@@ -291,29 +168,61 @@
         </div>
 
         <!-- Results Card -->
-        <div id="userDetails" class="hidden animate-fade">
-            <div class="glass-effect rounded-2xl overflow-hidden">
-                <!-- Banner -->
-                <div id="userBanner" class="h-32 sm:h-48 bg-cover bg-center"></div>
-                
-                <!-- Profile section -->
-                <div class="relative px-4 sm:px-8">
-                    <!-- Avatar -->
-                    <div class="absolute -top-16 left-4 sm:left-8">
-                        <img id="userAvatar" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-gray-900" alt="User avatar">
+        <div id="userDetails" class="max-w-3xl mx-auto mt-8 hidden animate-fade z-10">
+            <div class="glass-effect rounded-2xl overflow-hidden shadow-xl">
+                <!-- User Header -->
+                <div class="relative">
+                    <div id="userBanner" class="w-full h-48 bg-gray-800 bg-cover bg-center transition-all duration-300"></div>
+                    <div class="absolute -bottom-16 left-8">
+                        <div class="p-1 rounded-full bg-gray-800/80 backdrop-blur-sm">
+                            <img id="userAvatar" class="w-32 h-32 rounded-full ring-4 ring-indigo-500/50" src="" alt="User Avatar">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Info -->
+                <div class="pt-20 p-8">
+                    <div class="flex items-baseline gap-3 mb-6">
+                        <h2 id="userName" class="text-3xl font-bold"></h2>
+                        <span id="userId" class="text-sm text-gray-400 font-mono"></span>
                     </div>
                     
-                    <!-- User info -->
-                    <div class="pt-12 sm:pt-20 pb-6 sm:pb-8">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-2">
-                            <h2 id="userName" class="text-2xl sm:text-3xl font-bold"></h2>
-                            <div id="userBadges" class="flex flex-wrap gap-2"></div>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Global Name</p>
+                            <p id="globalName" class="font-semibold text-lg"></p>
                         </div>
-                        
-                        <!-- Status and activity -->
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-gray-400">
-                            <div id="userStatus" class="flex items-center gap-2"></div>
-                            <div id="userActivity" class="flex items-center gap-2"></div>
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Created At</p>
+                            <p id="createdAt" class="font-semibold text-lg"></p>
+                        </div>
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Status</p>
+                            <p id="userStatus" class="font-semibold text-lg flex items-center gap-2"></p>
+                        </div>
+                        <div class="glass-effect rounded-xl p-4 space-y-1">
+                            <p class="text-gray-400 text-sm font-medium">Bot</p>
+                            <p id="isBot" class="font-semibold text-lg"></p>
+                        </div>
+                    </div>
+
+                    <!-- Activities -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <span class="text-indigo-400">🎮</span> Activities
+                        </h3>
+                        <div id="userActivities" class="space-y-3">
+                            <!-- Activities will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Mutual Servers -->
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <span class="text-indigo-400">🏠</span> Mutual Servers
+                        </h3>
+                        <div id="mutualServers" class="grid grid-cols-2 gap-3">
+                            <!-- Servers will be inserted here -->
                         </div>
                     </div>
                 </div>
@@ -328,33 +237,98 @@
         </div>
 
         <!-- Server Details Modal -->
-        <div id="serverModal" class="fixed inset-0 z-[999] hidden">
-            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-            <div class="relative min-h-screen sm:flex sm:items-center justify-center p-4">
-                <div class="glass-effect rounded-xl w-full max-w-4xl mx-auto my-8 sm:my-0">
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between p-4 border-b border-gray-700/50">
-                        <h3 class="text-xl font-semibold">Server Members</h3>
-                        <button onclick="closeServerModal()" class="text-gray-400 hover:text-white">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
+        <div id="serverModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden animate-fade">
+            <div class="min-h-screen flex items-center justify-center p-4">
+                <div class="glass-effect rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-xl">
+                    <!-- Modal Header -->
+                    <div class="p-6 border-b border-gray-700/50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <img id="modalServerIcon" class="w-16 h-16 rounded-2xl" src="" alt="Server Icon">
+                                <div>
+                                    <h3 id="modalServerName" class="text-2xl font-bold"></h3>
+                                    <p id="modalServerId" class="text-gray-400 text-sm font-mono"></p>
+                                </div>
+                            </div>
+                            <button onclick="closeServerModal()" class="text-gray-400 hover:text-white transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     
-                    <!-- Modal content -->
-                    <div class="p-4">
-                        <div id="membersContainer" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar"></div>
-                        
-                        <!-- Pagination -->
-                        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-700/50">
-                            <button onclick="changeMembersPage(-1)" class="px-4 py-2 text-sm glass-effect rounded-lg hover:bg-gray-700/50 transition-all">
-                                Previous
-                            </button>
-                            <span id="pageInfo" class="text-sm text-gray-400"></span>
-                            <button onclick="changeMembersPage(1)" class="px-4 py-2 text-sm glass-effect rounded-lg hover:bg-gray-700/50 transition-all">
-                                Next
-                            </button>
+                    <!-- Modal Content -->
+                    <div class="p-6 overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar">
+                        <!-- Server Stats -->
+                        <div class="grid grid-cols-3 gap-4 mb-8">
+                            <div class="glass-effect rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-sm mb-1">Members</p>
+                                <p id="modalMemberCount" class="text-2xl font-bold text-indigo-400"></p>
+                            </div>
+                            <div class="glass-effect rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-sm mb-1">Channels</p>
+                                <p id="modalChannelCount" class="text-2xl font-bold text-indigo-400"></p>
+                            </div>
+                            <div class="glass-effect rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-sm mb-1">Roles</p>
+                                <p id="modalRoleCount" class="text-2xl font-bold text-indigo-400"></p>
+                            </div>
+                        </div>
+
+                        <!-- Server Info -->
+                        <div class="space-y-6">
+                            <div class="glass-effect rounded-xl p-4">
+                                <h4 class="text-lg font-semibold mb-3">Server Information</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Created At</p>
+                                        <p id="modalCreatedAt" class="font-medium"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Boost Level</p>
+                                        <p id="modalBoostLevel" class="font-medium"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Verification Level</p>
+                                        <p id="modalVerification" class="font-medium"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-400 text-sm">Owner</p>
+                                        <p id="modalOwner" class="font-medium"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Features -->
+                            <div class="glass-effect rounded-xl p-4">
+                                <h4 class="text-lg font-semibold mb-3">Features</h4>
+                                <div id="modalFeatures" class="flex flex-wrap gap-2">
+                                    <!-- Features will be inserted here -->
+                                </div>
+                            </div>
+
+                            <!-- Add this inside the Modal Content div, after the Features section -->
+                            <div class="glass-effect rounded-xl p-4 mt-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-lg font-semibold">Members</h4>
+                                    <div class="flex gap-2">
+                                        <button id="prevPage" onclick="changeMembersPage(-1)" class="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Previous
+                                        </button>
+                                        <span id="pageInfo" class="px-3 py-1 rounded-lg bg-gray-800">Page 1</span>
+                                        <button id="nextPage" onclick="changeMembersPage(1)" class="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="serverMembers" class="space-y-2">
+                                    <!-- Members will be inserted here -->
+                                    <div class="text-center text-gray-400 py-4">
+                                        Loading members...
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -432,59 +406,137 @@
             await fetchUserDetails(token);
         }
 
-        // Update fetchUserDetails to save to history
-        const originalFetchUserDetails = fetchUserDetails;
-        fetchUserDetails = async (token) => {
+        // Update fetchUserDetails to accept token parameter
+        async function fetchUserDetails(token) {
+            const userIdInput = document.getElementById('userId').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const userDetails = document.getElementById('userDetails');
+            const resultsLoading = document.getElementById('resultsLoading');
+            
             try {
-                const userIdInput = document.getElementById('userId').value;
-                const response = await fetch(`/users/web/${userIdInput}`, {
+                errorMessage.classList.add('hidden');
+                userDetails.classList.add('hidden');
+                resultsLoading.classList.remove('hidden');
+
+                // First try the mutual server endpoint
+                let response = await fetch(`/users/web/${userIdInput}`, {
                     headers: {
                         'cf-turnstile-response': token
                     }
                 });
-                const data = await response.json();
+                let data = await response.json();
 
-                // Only save to history if the fetch was successful
-                if (response.ok) {
-                    saveToHistory(userIdInput, data.username, data.avatarURL);
+                // If user not found in mutual servers, try public lookup
+                if (!response.ok && response.status === 404) {
+                    response = await fetch(`/users/web/lookup/${userIdInput}`, {
+                        headers: {
+                            'cf-turnstile-response': token
+                        }
+                    });
+                    data = await response.json();
                 }
 
-                // Call the original function to handle the UI updates
-                await originalFetchUserDetails(token);
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to fetch user details');
+                }
+
+                // Update UI with user details
+                document.getElementById('userBanner').style.backgroundImage = 
+                    data.bannerURL ? `url('${data.bannerURL}')` : 'none';
+                document.getElementById('userAvatar').src = 
+                    data.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                document.getElementById('userName').textContent = data.username;
+                document.getElementById('userId').textContent = data.id;
+                document.getElementById('globalName').textContent = data.globalName || 'None';
+                document.getElementById('createdAt').textContent = new Date(data.createdAt).toLocaleDateString();
+                
+                // Update status section based on whether user is in mutual server
+                if (data.presence) {
+                    document.getElementById('userStatus').innerHTML = 
+                        `${getStatusIcon(data.presence.status)} ${data.presence.status}`;
+                } else {
+                    document.getElementById('userStatus').innerHTML = 
+                        '<span class="text-gray-400">Not in mutual server</span>';
+                }
+                
+                document.getElementById('isBot').textContent = data.isBot ? 'Yes' : 'No';
+
+                // Update activities section
+                const activitiesContainer = document.getElementById('userActivities');
+                if (data.presence?.activities && data.presence.activities.length > 0) {
+                    activitiesContainer.innerHTML = data.presence.activities.map(activity => `
+                        <div class="glass-effect rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">${getActivityTypeIcon(activity.type)}</span>
+                                    <span class="font-semibold">${activity.name}</span>
+                                </div>
+                                <span class="text-sm text-indigo-400 font-medium px-3 py-1 bg-indigo-400/10 rounded-full">
+                                    ${activity.type}
+                                </span>
+                            </div>
+                            ${activity.state ? `
+                                <div class="mt-3 text-gray-300">
+                                    ${activity.state}
+                                </div>
+                            ` : ''}
+                            ${activity.details ? `
+                                <div class="mt-1 text-gray-400">
+                                    ${activity.details}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    activitiesContainer.innerHTML = `
+                        <div class="glass-effect rounded-xl p-6 text-gray-400 text-center">
+                            ${data.presence ? 'No activities' : 'Activities unavailable'}
+                        </div>
+                    `;
+                }
+
+                // Update mutual servers section
+                const mutualServersContainer = document.getElementById('mutualServers');
+                if (data.mutualGuilds && data.mutualGuilds.length > 0) {
+                    mutualServersContainer.innerHTML = data.mutualGuilds.map(guild => `
+                        <div onclick="showServerDetails('${guild.id}')" 
+                            class="glass-effect rounded-xl p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer">
+                            ${guild.icon ? 
+                                `<img src="${guild.icon}" class="w-10 h-10 rounded-xl">` : 
+                                '<div class="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center text-lg font-bold">' + guild.name.charAt(0) + '</div>'
+                            }
+                            <div class="flex-1 min-w-0">
+                                <p class="font-medium truncate">${guild.name}</p>
+                                ${guild.member.nickname ? 
+                                    `<p class="text-sm text-gray-400 truncate">Nickname: ${guild.member.nickname}</p>` : 
+                                    ''
+                                }
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    mutualServersContainer.innerHTML = `
+                        <div class="col-span-2 glass-effect rounded-xl p-6 text-center">
+                            <p class="text-gray-400 mb-4">No mutual servers</p>
+                            <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
+                                class="inline-flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.369-.444.85-.608 1.23a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.23A.077.077 0 0 0 8.562 3c-1.714.29-3.354.8-4.885 1.491a.07.07 0 0 0-.032.027C.533 9.093-.32 13.555.099 17.961a.08.08 0 0 0 .031.055 20.03 20.03 0 0 0 5.993 2.98.078.078 0 0 0 .084-.026c.462-.62.874-1.275 1.226-1.963.021-.04.001-.088-.041-.104a13.201 13.201 0 0 1-1.872-.878.075.075 0 0 1-.008-.125c.126-.093.252-.19.372-.287a.075.075 0 0 1 .078-.01c3.927 1.764 8.18 1.764 12.061 0a.075.075 0 0 1 .079.009c.12.098.245.195.372.288a.075.075 0 0 1-.006.125c-.598.344-1.22.635-1.873.877a.075.075 0 0 0-.041.105c.36.687.772 1.341 1.225 1.962a.077.077 0 0 0 .084.028 19.963 19.963 0 0 0 6.002-2.981.076.076 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.06.06 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.312-.946 2.38-2.157 2.38z"/>
+                                </svg>
+                                Join Our Server
+                            </a>
+                        </div>
+                    `;
+                }
+
+                resultsLoading.classList.add('hidden');
+                userDetails.classList.remove('hidden');
             } catch (error) {
-                console.error('Error fetching user details:', error);
-                // Handle error appropriately
+                document.getElementById('errorText').textContent = error.message;
+                errorMessage.classList.remove('hidden');
+                userDetails.classList.add('hidden');
+                resultsLoading.classList.add('hidden');
             }
-        };
-
-        // Update saveToHistory function to handle null checks
-        function saveToHistory(userId, username, avatarUrl) {
-            if (!userId || !username || !avatarUrl) {
-                console.warn('Invalid data for history:', { userId, username, avatarUrl });
-                return;
-            }
-
-            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-            
-            // Remove duplicate if exists
-            history = history.filter(item => item.userId !== userId);
-            
-            // Add new search to beginning
-            history.unshift({
-                userId,
-                username,
-                avatarUrl,
-                timestamp: new Date().toISOString(),
-                pinned: false // Initialize pinned state
-            });
-            
-            // Keep only MAX_HISTORY_ITEMS
-            if (history.length > MAX_HISTORY_ITEMS) {
-                history = history.slice(0, MAX_HISTORY_ITEMS);
-            }
-            
-            localStorage.setItem('searchHistory', JSON.stringify(history));
-            updateHistorySidebar();
         }
 
         let currentServerId = null;
@@ -593,12 +645,11 @@
                 }
 
                 membersContainer.innerHTML = data.members.map(member => `
-                    <div class="glass-effect rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4 hover:bg-gray-700/50 transition-all">
-                        <!-- Avatar and basic info -->
-                        <div class="flex flex-col sm:flex-row items-center gap-3 w-full">
-                            <img src="${member.avatarURL}" class="w-16 h-16 sm:w-10 sm:h-10 rounded-full" alt="${member.username}'s avatar">
-                            <div class="text-center sm:text-left flex-1">
-                                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-2">
+                    <div class="glass-effect rounded-lg p-3 flex items-center justify-between group hover:bg-gray-700/50 transition-all">
+                        <div class="flex items-center gap-3">
+                            <img src="${member.avatarURL}" class="w-10 h-10 rounded-full" alt="${member.username}'s avatar">
+                            <div>
+                                <div class="flex items-center gap-2">
                                     <span class="font-medium">${member.username}</span>
                                     ${member.nickname ? `
                                         <span class="text-gray-400 text-sm">(${member.nickname})</span>
@@ -607,29 +658,29 @@
                                         <span class="px-2 py-0.5 rounded-full text-xs bg-indigo-500/20 text-indigo-300">BOT</span>
                                     ` : ''}
                                 </div>
-                                
-                                <!-- Status and roles -->
-                                <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2 mt-2 text-sm">
-                                    <span class="flex items-center gap-1">
-                                        ${getStatusIcon(member.status)}
-                                        <span class="text-gray-400">${member.status}</span>
-                                    </span>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span>${getStatusIcon(member.status)}</span>
+                                    ${member.globalName ? `
+                                        <span class="text-gray-400">${member.globalName}</span>
+                                    ` : ''}
                                     ${member.highestRole ? `
-                                        <span class="px-2 py-0.5 rounded-full text-xs" 
-                                            style="background-color: ${member.highestRole.color}20; color: ${member.highestRole.color}">
+                                        <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: ${member.highestRole.color}20; color: ${member.highestRole.color}">
                                             ${member.highestRole.name}
                                         </span>
                                     ` : ''}
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Activities -->
-                        ${member.activities && member.activities.length > 0 ? `
-                            <div class="text-sm text-gray-400 text-center sm:text-right mt-2 sm:mt-0">
-                                ${member.activities[0].name}
-                            </div>
-                        ` : ''}
+                        <div class="flex items-center gap-2">
+                            ${member.activities && member.activities.length > 0 ? `
+                                <div class="hidden group-hover:block text-sm text-gray-400">
+                                    ${member.activities[0].name}
+                                </div>
+                            ` : ''}
+                            ${member.roles.length > 1 ? `
+                                <span class="text-xs text-gray-400">+${member.roles.length - 1} roles</span>
+                            ` : ''}
+                        </div>
                     </div>
                 `).join('');
 
@@ -689,6 +740,29 @@
         // Add these functions for search history
         const MAX_HISTORY_ITEMS = 10;
 
+        function saveToHistory(userId, username, avatarUrl) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            
+            // Remove duplicate if exists
+            history = history.filter(item => item.userId !== userId);
+            
+            // Add new search to beginning
+            history.unshift({
+                userId,
+                username,
+                avatarUrl,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only MAX_HISTORY_ITEMS
+            if (history.length > MAX_HISTORY_ITEMS) {
+                history = history.slice(0, MAX_HISTORY_ITEMS);
+            }
+            
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
+
         function clearHistory() {
             localStorage.removeItem('searchHistory');
             updateHistorySidebar();
@@ -708,35 +782,15 @@
             }
             
             historyContainer.innerHTML = history.map(item => `
-                <div class="glass-effect rounded-lg p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all group">
+                <div class="glass-effect rounded-lg p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer"
+                    onclick="searchFromHistory('${item.userId}')">
                     <img src="${item.avatarUrl}" class="w-10 h-10 rounded-full" alt="${item.username}'s avatar">
-                    <div class="flex-1 min-w-0 cursor-pointer" onclick="searchFromHistory('${item.userId}')">
-                        <div class="flex items-center gap-2">
-                            <p class="font-medium truncate">${item.username}</p>
-                            ${item.pinned ? '<span class="text-yellow-500"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.828.722a.5.5 0 01.354 0l7.071 7.071a.5.5 0 010 .707l-7.071 7.071a.5.5 0 01-.707 0L2.404 8.5a.5.5 0 010-.707L9.475.722z"/></svg></span>' : ''}
-                        </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium truncate">${item.username}</p>
                         <p class="text-sm text-gray-400 truncate">${item.userId}</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-400">
-                            ${formatTimeAgo(new Date(item.timestamp))}
-                        </span>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onclick="togglePin('${item.userId}')" 
-                                class="p-1 rounded hover:bg-gray-700/50 tooltip" 
-                                data-tooltip="${item.pinned ? 'Unpin' : 'Pin'}">
-                                <svg class="w-4 h-4 ${item.pinned ? 'text-yellow-500' : 'text-gray-400'}" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.828.722a.5.5 0 01.354 0l7.071 7.071a.5.5 0 010 .707l-7.071 7.071a.5.5 0 01-.707 0L2.404 8.5a.5.5 0 010-.707L9.475.722z"/>
-                                </svg>
-                            </button>
-                            <button onclick="deleteHistoryItem('${item.userId}')" 
-                                class="p-1 rounded hover:bg-gray-700/50 tooltip" 
-                                data-tooltip="Delete">
-                                <svg class="w-4 h-4 text-gray-400 hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                            </button>
-                        </div>
+                    <div class="text-xs text-gray-400">
+                        ${formatTimeAgo(new Date(item.timestamp))}
                     </div>
                 </div>
             `).join('');
@@ -756,6 +810,21 @@
             if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
             return `${Math.floor(diffInSeconds / 86400)}d ago`;
         }
+
+        // Update fetchUserDetails to save to history
+        const originalFetchUserDetails = fetchUserDetails;
+        fetchUserDetails = async (token) => {
+            await originalFetchUserDetails(token);
+            
+            // Save to history after successful fetch
+            const userIdInput = document.getElementById('userId').value;
+            const username = document.getElementById('userName').textContent;
+            const avatarUrl = document.getElementById('userAvatar').src;
+            
+            if (username && avatarUrl) {
+                saveToHistory(userIdInput, username, avatarUrl);
+            }
+        };
 
         // Initialize history on page load
         document.addEventListener('DOMContentLoaded', updateHistorySidebar);
@@ -800,188 +869,6 @@
                 overlay.classList.add('hidden');
             }
         });
-
-        function toggleTheme() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.theme = 'light';
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.theme = 'dark';
-            }
-        }
-
-        // Add these new functions for history features
-        function togglePin(userId) {
-            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-            const itemIndex = history.findIndex(item => item.userId === userId);
-            
-            if (itemIndex !== -1) {
-                history[itemIndex].pinned = !history[itemIndex].pinned;
-                
-                // Sort history: pinned items first, then by timestamp
-                history.sort((a, b) => {
-                    if (a.pinned && !b.pinned) return -1;
-                    if (!a.pinned && b.pinned) return 1;
-                    return new Date(b.timestamp) - new Date(a.timestamp);
-                });
-                
-                localStorage.setItem('searchHistory', JSON.stringify(history));
-                updateHistorySidebar();
-            }
-        }
-
-        function deleteHistoryItem(userId) {
-            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-            history = history.filter(item => item.userId !== userId);
-            localStorage.setItem('searchHistory', JSON.stringify(history));
-            updateHistorySidebar();
-        }
-
-        function exportHistory() {
-            const history = localStorage.getItem('searchHistory') || '[]';
-            const blob = new Blob([history], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'discord-lookup-history.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function importHistory() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            
-            input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = event => {
-                    try {
-                        const importedHistory = JSON.parse(event.target.result);
-                        if (Array.isArray(importedHistory)) {
-                            localStorage.setItem('searchHistory', JSON.stringify(importedHistory));
-                            updateHistorySidebar();
-                        }
-                    } catch (error) {
-                        console.error('Invalid history file:', error);
-                    }
-                };
-                
-                reader.readAsText(file);
-            };
-            
-            input.click();
-        }
-
-        async function fetchUserDetails(token) {
-            try {
-                const userIdInput = document.getElementById('userId').value;
-                const userDetails = document.getElementById('userDetails');
-                const loadingOverlay = document.getElementById('loadingOverlay');
-                
-                // Show loading state
-                loadingOverlay.classList.remove('hidden');
-                userDetails.classList.add('hidden');
-
-                // First try the mutual server endpoint
-                let response = await fetch(`/users/web/${userIdInput}`, {
-                    headers: {
-                        'cf-turnstile-response': token
-                    }
-                });
-                let data = await response.json();
-
-                // If user not found in mutual servers, try public lookup
-                if (!response.ok && response.status === 404) {
-                    response = await fetch(`/users/web/lookup/${userIdInput}`, {
-                        headers: {
-                            'cf-turnstile-response': token
-                        }
-                    });
-                    data = await response.json();
-                }
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Failed to fetch user details');
-                }
-
-                // Save to history if successful
-                saveToHistory(userIdInput, data.username, data.avatarURL);
-
-                // Update UI with user data
-                document.getElementById('userBanner').style.backgroundColor = data.accentColor || '#000000';
-                document.getElementById('userAvatar').src = data.avatarURL;
-                document.getElementById('userName').textContent = data.username;
-                
-                // Update status
-                const statusDiv = document.getElementById('userStatus');
-                statusDiv.innerHTML = `
-                    ${getStatusIcon(data.status)}
-                    <span>${data.status}</span>
-                `;
-
-                // Update activity
-                const activityDiv = document.getElementById('userActivity');
-                if (data.activities && data.activities.length > 0) {
-                    const activity = data.activities[0];
-                    activityDiv.innerHTML = `
-                        ${getActivityTypeIcon(activity.type)}
-                        <span>${activity.name}</span>
-                        ${activity.state ? `<span class="text-sm">- ${activity.state}</span>` : ''}
-                    `;
-                } else {
-                    activityDiv.innerHTML = '';
-                }
-
-                // Show the results
-                loadingOverlay.classList.add('hidden');
-                userDetails.classList.remove('hidden');
-
-            } catch (error) {
-                console.error('Error:', error);
-                const loadingOverlay = document.getElementById('loadingOverlay');
-                loadingOverlay.innerHTML = `
-                    <div class="text-center text-red-400">
-                        <p class="text-lg font-semibold mb-2">Error</p>
-                        <p>${error.message || 'Failed to fetch user details'}</p>
-                    </div>
-                `;
-            }
-        }
-
-        function saveToHistory(userId, username, avatarUrl) {
-            if (!userId || !username || !avatarUrl) {
-                console.warn('Invalid data for history:', { userId, username, avatarUrl });
-                return;
-            }
-
-            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-            
-            // Remove duplicate if exists
-            history = history.filter(item => item.userId !== userId);
-            
-            // Add new search to beginning
-            history.unshift({
-                userId,
-                username,
-                avatarUrl,
-                timestamp: new Date().toISOString(),
-                pinned: false // Initialize pinned state
-            });
-            
-            // Keep only MAX_HISTORY_ITEMS
-            if (history.length > MAX_HISTORY_ITEMS) {
-                history = history.slice(0, MAX_HISTORY_ITEMS);
-            }
-            
-            localStorage.setItem('searchHistory', JSON.stringify(history));
-            updateHistorySidebar();
-        }
     </script>
 </body>
 </html> 
