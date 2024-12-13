@@ -529,6 +529,7 @@
                                                 class="w-full h-full object-cover" 
                                                 alt="${activity.assets.largeText || activity.name}"
                                                 title="${activity.assets.largeText || ''}"
+                                                onerror="console.log('Image failed to load:', this.src)"
                                             >
                                         ` : ''}
                                     </div>
