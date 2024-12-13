@@ -15,4 +15,9 @@ router.get('/utils/helpers.js', (req, res) => {
     `);
 });
 
+// Add this route
+router.get('/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/docs.html'));
+});
+
 module.exports = router; 

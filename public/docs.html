@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Lookup API Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        pre {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-700/50">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <a href="/" class="flex items-center gap-2">
+                    <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
+                        Discord Lookup
+                    </span>
+                </a>
+                <div class="flex items-center gap-4">
+                    <a href="/" class="text-gray-400 hover:text-white">Home</a>
+                    <a href="/docs.html" class="text-gray-400 hover:text-white">Documentation</a>
+                    <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
+                        class="flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all text-sm">
+                        Join Server
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-3">API Documentation</h1>
+            <p class="text-gray-400">Complete documentation for the Discord Lookup API</p>
+        </div>
+
+        <!-- API Documentation -->
+        <div class="max-w-4xl mx-auto space-y-8">
+            <!-- Authentication -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">API Endpoints</h2>
+                <p class="text-gray-400 mb-4">The API endpoints are freely accessible without authentication but have rate limiting:</p>
+                <pre class="glass-effect p-4 rounded-lg text-sm mb-4">
+<code>// Rate Limits
+5 requests per second per IP address
+
+// User endpoints
+GET /users/api/:userid
+GET /users/api/lookup/:userid
+
+// Server endpoints
+GET /servers/api
+GET /servers/api/:id/detail
+GET /servers/api/:id/members</code></pre>
+                <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <h3 class="text-yellow-400 font-semibold mb-2">Note</h3>
+                    <p class="text-gray-400">
+                        The web interface uses separate endpoints (/users/web/...) that require Cloudflare Turnstile verification.
+                        For API usage, use the /api/ endpoints which have rate limiting instead of verification.
+                    </p>
+                </div>
+                <div class="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <h3 class="text-blue-400 font-semibold mb-2">Rate Limit Headers</h3>
+                    <p class="text-gray-400 mb-2">The API returns the following rate limit headers:</p>
+                    <ul class="list-disc list-inside text-gray-400">
+                        <li>RateLimit-Limit: Maximum requests allowed in the window</li>
+                        <li>RateLimit-Remaining: Remaining requests in the current window</li>
+                        <li>RateLimit-Reset: Time when the rate limit resets (in seconds)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- User Endpoints -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">User Endpoints</h2>
+
+                <!-- Get User Details -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-400">Get User Details</h3>
+                    <p class="text-gray-400 mb-2">Get detailed information about a Discord user (requires mutual server)</p>
+                    
+                    <div class="glass-effect rounded-lg p-4 mb-4">
+                        <p class="font-mono mb-2">GET /users/api/:userid</p>
+                        <p class="text-sm text-gray-400 mb-2">Parameters:</p>
+                        <ul class="list-disc list-inside text-sm text-gray-400 mb-4">
+                            <li>userid (required) - Discord user ID</li>
+                        </ul>
+                        <p class="text-sm text-gray-400 mb-2">Response:</p>
+                        <pre class="text-sm overflow-x-auto">
+<code>{
+    "id": "string",
+    "username": "string",
+    "globalName": "string",
+    "discriminator": "string",
+    "avatarURL": "string",
+    "bannerURL": "string",
+    "accentColor": "number",
+    "flags": {
+        "value": "number",
+        "names": "string[]"
+    },
+    "createdAt": "date",
+    "isBot": "boolean",
+    "presence": {
+        "status": "string",
+        "activities": [{
+            "name": "string",
+            "type": "string",
+            "state": "string"
+        }]
+    },
+    "mutualGuilds": [{
+        "id": "string",
+        "name": "string",
+        "icon": "string",
+        "member": {
+            "nickname": "string",
+            "joinedAt": "date",
+            "roles": [{
+                "id": "string",
+                "name": "string",
+                "color": "string"
+            }]
+        }
+    }]
+}</code></pre>
+                    </div>
+
+                    <!-- Lookup User -->
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-400">Lookup User</h3>
+                    <p class="text-gray-400 mb-2">Look up any Discord user by ID (no mutual server required)</p>
+                    
+                    <div class="glass-effect rounded-lg p-4">
+                        <p class="font-mono mb-2">GET /users/api/lookup/:userid</p>
+                        <p class="text-sm text-gray-400 mb-2">Parameters:</p>
+                        <ul class="list-disc list-inside text-sm text-gray-400 mb-4">
+                            <li>userid (required) - Discord user ID</li>
+                        </ul>
+                        <p class="text-sm text-gray-400 mb-2">Response:</p>
+                        <pre class="text-sm overflow-x-auto">
+<code>{
+    "id": "string",
+    "username": "string",
+    "globalName": "string",
+    "discriminator": "string",
+    "avatarURL": "string",
+    "bannerURL": "string",
+    "accentColor": "number",
+    "flags": {
+        "value": "number",
+        "names": "string[]"
+    },
+    "createdAt": "date",
+    "isBot": "boolean",
+    "isInMutualServer": "boolean"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Server Endpoints -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">Server Endpoints</h2>
+
+                <!-- Get Servers -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-400">Get Servers</h3>
+                    <p class="text-gray-400 mb-2">Get list of servers the bot is in</p>
+                    
+                    <div class="glass-effect rounded-lg p-4">
+                        <p class="font-mono mb-2">GET /servers/api</p>
+                        <p class="text-sm text-gray-400 mb-2">Response:</p>
+                        <pre class="text-sm overflow-x-auto">
+<code>{
+    "totalServers": "number",
+    "servers": [{
+        "name": "string",
+        "id": "string",
+        "memberCount": "number",
+        "icon": "string",
+        "owner": "string",
+        "createdAt": "date"
+    }]
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Get Server Details -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-400">Get Server Details</h3>
+                    <p class="text-gray-400 mb-2">Get detailed information about a specific server</p>
+                    
+                    <div class="glass-effect rounded-lg p-4">
+                        <p class="font-mono mb-2">GET /servers/api/:id/detail</p>
+                        <p class="text-sm text-gray-400 mb-2">Parameters:</p>
+                        <ul class="list-disc list-inside text-sm text-gray-400 mb-4">
+                            <li>id (required) - Server ID</li>
+                        </ul>
+                        <p class="text-sm text-gray-400 mb-2">Response:</p>
+                        <pre class="text-sm overflow-x-auto">
+<code>{
+    "general": {
+        "name": "string",
+        "id": "string",
+        "icon": "string",
+        "banner": "string",
+        "description": "string",
+        "createdAt": "date",
+        "preferredLocale": "string"
+    },
+    "stats": {
+        "totalMembers": "number",
+        "onlineMembers": "number",
+        "botCount": "number",
+        "humanCount": "number",
+        "boostLevel": "number",
+        "boostCount": "number",
+        "verificationLevel": "string"
+    },
+    "channels": {
+        "total": "number",
+        "categories": "array",
+        "text": "array",
+        "voice": "array",
+        "announcement": "array",
+        "stage": "array",
+        "forum": "array"
+    },
+    "roles": [{
+        "id": "string",
+        "name": "string",
+        "color": "string",
+        "position": "number",
+        "permissions": "string[]"
+    }],
+    "features": "string[]"
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Get Server Members -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-2 text-indigo-400">Get Server Members</h3>
+                    <p class="text-gray-400 mb-2">Get paginated list of server members</p>
+                    
+                    <div class="glass-effect rounded-lg p-4">
+                        <p class="font-mono mb-2">GET /servers/api/:id/members</p>
+                        <p class="text-sm text-gray-400 mb-2">Parameters:</p>
+                        <ul class="list-disc list-inside text-sm text-gray-400 mb-4">
+                            <li>id (required) - Server ID</li>
+                            <li>page (optional) - Page number (default: 1)</li>
+                        </ul>
+                        <p class="text-sm text-gray-400 mb-2">Response:</p>
+                        <pre class="text-sm overflow-x-auto">
+<code>{
+    "total": "number",
+    "page": "number",
+    "limit": "number",
+    "totalPages": "number",
+    "nextPage": "number|null",
+    "previousPage": "number|null",
+    "members": [{
+        "id": "string",
+        "username": "string",
+        "globalName": "string",
+        "nickname": "string",
+        "discriminator": "string",
+        "joinedAt": "date",
+        "isBot": "boolean",
+        "avatarURL": "string",
+        "status": "string",
+        "activities": [{
+            "name": "string",
+            "type": "string",
+            "state": "string"
+        }],
+        "roles": [{
+            "id": "string",
+            "name": "string",
+            "color": "string",
+            "position": "number"
+        }]
+    }]
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Responses -->
+            <div class="glass-effect rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">Error Responses</h2>
+                <p class="text-gray-400 mb-4">All endpoints return the following structure for errors:</p>
+                <pre class="glass-effect p-4 rounded-lg text-sm mb-4">
+<code>{
+    "error": "string",
+    "message": "string"
+}</code></pre>
+                <div class="mt-4">
+                    <p class="text-gray-400 mb-2">Common error status codes:</p>
+                    <ul class="list-disc list-inside text-gray-400">
+                        <li>400 - Bad Request (invalid input)</li>
+                        <li>401 - Unauthorized (invalid captcha, web endpoints only)</li>
+                        <li>404 - Not Found (user/server not found)</li>
+                        <li>429 - Too Many Requests (rate limit exceeded)</li>
+                        <li>500 - Internal Server Error</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -79,9 +79,8 @@
                 
                 <!-- Right side -->
                 <div class="flex items-center gap-4">
-                    <button onclick="clearHistory()" class="text-gray-400 hover:text-white text-sm">
-                        Clear History
-                    </button>
+                    <a href="/" class="text-gray-400 hover:text-white">Home</a>
+                    <a href="/docs.html" class="text-gray-400 hover:text-white">API Docs</a>
                     <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
                         class="hidden lg:flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all text-sm">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -99,7 +98,13 @@
         <div class="h-full flex flex-col pt-16">
             <!-- Sidebar Header -->
             <div class="p-4 border-b border-gray-700/50">
-                <h2 class="text-lg font-semibold">Search History</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold">Search History</h2>
+                    <button onclick="clearHistory()" 
+                        class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-all">
+                        Clear All
+                    </button>
+                </div>
             </div>
             
             <!-- History List -->
@@ -417,7 +422,7 @@
                 resultsLoading.classList.remove('hidden');
 
                 // First try the mutual server endpoint
-                let response = await fetch(`/users/${userIdInput}`, {
+                let response = await fetch(`/users/web/${userIdInput}`, {
                     headers: {
                         'cf-turnstile-response': token
                     }
@@ -426,7 +431,7 @@
 
                 // If user not found in mutual servers, try public lookup
                 if (!response.ok && response.status === 404) {
-                    response = await fetch(`/users/lookup/${userIdInput}`, {
+                    response = await fetch(`/users/web/lookup/${userIdInput}`, {
                         headers: {
                             'cf-turnstile-response': token
                         }
@@ -572,7 +577,7 @@
                 }, 10000); // 10 second timeout
 
                 // Fetch server details
-                const response = await fetch(`/servers/${serverId}/detail`);
+                const response = await fetch(`/servers/api/${serverId}/detail`);
                 const data = await response.json();
 
                 // Update modal content
@@ -624,7 +629,7 @@
                     </div>
                 `;
 
-                const response = await fetch(`/servers/${serverId}/members?page=${page}`);
+                const response = await fetch(`/servers/api/${serverId}/members?page=${page}`);
                 const data = await response.json();
 
                 // Update pagination info
