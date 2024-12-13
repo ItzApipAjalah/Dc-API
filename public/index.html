@@ -56,6 +56,22 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* Add to your existing styles */
+        @media (max-width: 640px) {
+            #serverMembers[data-view="detailed"] {
+                font-size: 0.875rem;
+            }
+            
+            #serverMembers[data-view="detailed"] .glass-effect {
+                padding: 0.5rem;
+            }
+            
+            #serverMembers[data-view="detailed"] img {
+                width: 2rem;
+                height: 2rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
@@ -81,9 +97,6 @@
                 <div class="flex items-center gap-4">
                     <a href="/" class="text-gray-400 hover:text-white">Home</a>
                     <a href="/docs.html" class="text-gray-400 hover:text-white">API Docs</a>
-                    <button onclick="clearHistory()" class="text-gray-400 hover:text-white text-sm">
-                        Clear History
-                    </button>
                     <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
                         class="hidden lg:flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all text-sm">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -101,7 +114,13 @@
         <div class="h-full flex flex-col pt-16">
             <!-- Sidebar Header -->
             <div class="p-4 border-b border-gray-700/50">
-                <h2 class="text-lg font-semibold">Search History</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold">Search History</h2>
+                    <button onclick="clearHistory()" 
+                        class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-all">
+                        Clear All
+                    </button>
+                </div>
             </div>
             
             <!-- History List -->
@@ -308,25 +327,35 @@
                                 </div>
                             </div>
 
-                            <!-- Add this inside the Modal Content div, after the Features section -->
-                            <div class="glass-effect rounded-xl p-4 mt-6">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h4 class="text-lg font-semibold">Members</h4>
-                                    <div class="flex gap-2">
-                                        <button id="prevPage" onclick="changeMembersPage(-1)" class="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-                                            Previous
+                            <!-- Update the Server Members List section in the modal -->
+                            <div class="space-y-4">
+                                <h4 class="text-lg font-semibold flex items-center justify-between">
+                                    <span>Members</span>
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <button id="viewToggle" onclick="toggleMemberView()" class="text-gray-400 hover:text-white">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path id="viewIcon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                            </svg>
                                         </button>
-                                        <span id="pageInfo" class="px-3 py-1 rounded-lg bg-gray-800">Page 1</span>
-                                        <button id="nextPage" onclick="changeMembersPage(1)" class="px-3 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
-                                            Next
-                                        </button>
+                                        <span id="pageInfo">Page 1 of 1</span>
                                     </div>
-                                </div>
-                                <div id="serverMembers" class="space-y-2">
+                                </h4>
+
+                                <!-- Members List Container with view toggle -->
+                                <div id="serverMembers" class="space-y-2" data-view="detailed">
                                     <!-- Members will be inserted here -->
-                                    <div class="text-center text-gray-400 py-4">
-                                        Loading members...
-                                    </div>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div class="flex items-center justify-center gap-4 mt-4">
+                                    <button id="prevPage" onclick="changeMembersPage(-1)" 
+                                        class="px-4 py-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                        Previous
+                                    </button>
+                                    <button id="nextPage" onclick="changeMembersPage(1)"
+                                        class="px-4 py-2 rounded-lg bg-gray-700/50 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                        Next
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -614,6 +643,7 @@
 
         async function fetchServerMembers(serverId, page) {
             const membersContainer = document.getElementById('serverMembers');
+            const isCompactView = membersContainer.dataset.view === 'compact';
             
             try {
                 membersContainer.innerHTML = `
@@ -644,45 +674,66 @@
                     return;
                 }
 
-                membersContainer.innerHTML = data.members.map(member => `
-                    <div class="glass-effect rounded-lg p-3 flex items-center justify-between group hover:bg-gray-700/50 transition-all">
-                        <div class="flex items-center gap-3">
-                            <img src="${member.avatarURL}" class="w-10 h-10 rounded-full" alt="${member.username}'s avatar">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-medium">${member.username}</span>
-                                    ${member.nickname ? `
-                                        <span class="text-gray-400 text-sm">(${member.nickname})</span>
-                                    ` : ''}
-                                    ${member.isBot ? `
-                                        <span class="px-2 py-0.5 rounded-full text-xs bg-indigo-500/20 text-indigo-300">BOT</span>
-                                    ` : ''}
+                membersContainer.innerHTML = data.members.map(member => {
+                    if (isCompactView) {
+                        // Compact mobile view
+                        return `
+                            <div class="glass-effect rounded-lg p-2 flex items-center gap-2 hover:bg-gray-700/50 transition-all">
+                                <img src="${member.avatarURL}" class="w-8 h-8 rounded-full" alt="${member.username}'s avatar">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1 text-sm">
+                                        <span class="font-medium truncate">${member.username}</span>
+                                        ${member.isBot ? `
+                                            <span class="px-1 py-0.5 rounded text-xs bg-indigo-500/20 text-indigo-300">BOT</span>
+                                        ` : ''}
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <span>${getStatusIcon(member.status)}</span>
-                                    ${member.globalName ? `
-                                        <span class="text-gray-400">${member.globalName}</span>
+                                <span class="text-gray-400">${getStatusIcon(member.status)}</span>
+                            </div>
+                        `;
+                    } else {
+                        // Detailed desktop view (existing view)
+                        return `
+                            <div class="glass-effect rounded-lg p-3 flex items-center justify-between group hover:bg-gray-700/50 transition-all">
+                                <div class="flex items-center gap-3">
+                                    <img src="${member.avatarURL}" class="w-10 h-10 rounded-full" alt="${member.username}'s avatar">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium">${member.username}</span>
+                                            ${member.nickname ? `
+                                                <span class="text-gray-400 text-sm">(${member.nickname})</span>
+                                            ` : ''}
+                                            ${member.isBot ? `
+                                                <span class="px-2 py-0.5 rounded-full text-xs bg-indigo-500/20 text-indigo-300">BOT</span>
+                                            ` : ''}
+                                        </div>
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <span>${getStatusIcon(member.status)}</span>
+                                            ${member.globalName ? `
+                                                <span class="text-gray-400">${member.globalName}</span>
+                                            ` : ''}
+                                            ${member.highestRole ? `
+                                                <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: ${member.highestRole.color}20; color: ${member.highestRole.color}">
+                                                    ${member.highestRole.name}
+                                                </span>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    ${member.activities && member.activities.length > 0 ? `
+                                        <div class="hidden group-hover:block text-sm text-gray-400">
+                                            ${member.activities[0].name}
+                                        </div>
                                     ` : ''}
-                                    ${member.highestRole ? `
-                                        <span class="px-2 py-0.5 rounded-full text-xs" style="background-color: ${member.highestRole.color}20; color: ${member.highestRole.color}">
-                                            ${member.highestRole.name}
-                                        </span>
+                                    ${member.roles.length > 1 ? `
+                                        <span class="text-xs text-gray-400">+${member.roles.length - 1} roles</span>
                                     ` : ''}
                                 </div>
                             </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            ${member.activities && member.activities.length > 0 ? `
-                                <div class="hidden group-hover:block text-sm text-gray-400">
-                                    ${member.activities[0].name}
-                                </div>
-                            ` : ''}
-                            ${member.roles.length > 1 ? `
-                                <span class="text-xs text-gray-400">+${member.roles.length - 1} roles</span>
-                            ` : ''}
-                        </div>
-                    </div>
-                `).join('');
+                        `;
+                    }
+                }).join('');
 
             } catch (error) {
                 console.error('Error fetching server members:', error);
@@ -869,6 +920,24 @@
                 overlay.classList.add('hidden');
             }
         });
+
+        // Add these functions to your script section
+        function toggleMemberView() {
+            const container = document.getElementById('serverMembers');
+            const icon = document.getElementById('viewIcon');
+            const currentView = container.dataset.view;
+            
+            if (currentView === 'detailed') {
+                container.dataset.view = 'compact';
+                icon.setAttribute('d', 'M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z');
+            } else {
+                container.dataset.view = 'detailed';
+                icon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+            }
+            
+            // Refresh the current page to update the view
+            fetchServerMembers(currentServerId, currentPage);
+        }
     </script>
 </body>
 </html> 
