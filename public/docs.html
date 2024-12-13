@@ -22,28 +22,16 @@
             overflow-x: auto;
         }
     </style>
+    <script src="/js/navbar.js"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
     <!-- Navbar -->
-    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-700/50">
-        <div class="container mx-auto px-4">
-            <div class="flex items-center justify-between h-16">
-                <a href="/" class="flex items-center gap-2">
-                    <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
-                        Discord Lookup
-                    </span>
-                </a>
-                <div class="flex items-center gap-4">
-                    <a href="/" class="text-gray-400 hover:text-white">Home</a>
-                    <a href="/docs.html" class="text-gray-400 hover:text-white">Documentation</a>
-                    <a href="https://discord.gg/6h8VjXYuyX" target="_blank" 
-                        class="flex items-center gap-2 px-4 py-2 gradient-bg rounded-lg hover:opacity-90 transition-all text-sm">
-                        Join Server
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div id="navbar"></div>
+
+    <script>
+        document.getElementById('navbar').innerHTML = createNavbar();
+        initNavbar();
+    </script>
 
     <div class="container mx-auto px-4 py-12">
         <!-- Header -->
@@ -300,6 +288,43 @@ GET /servers/api/:id/members</code></pre>
         }]
     }]
 }</code></pre>
+                    </div>
+                </div>
+
+                <!-- Server Info Endpoint -->
+                <div class="glass-effect rounded-xl p-6 mt-6">
+                    <h2 class="text-2xl font-bold mb-4">Server Info Endpoint</h2>
+                    <p class="text-gray-400 mb-4">Get detailed information about a server where the bot is present.</p>
+                    
+                    <pre class="glass-effect p-4 rounded-lg text-sm mb-4">
+<code>GET /servers/api/:id/info
+
+Response:
+{
+    "id": "string",
+    "name": "string",
+    "icon": "string | null",
+    "memberCount": number,
+    "channelCount": number,
+    "roleCount": number,
+    "createdAt": "string",
+    "boostLevel": number,
+    "boostCount": number,
+    "verificationLevel": string,
+    "features": string[],
+    "description": "string | null",
+    "ownerId": "string",
+    "preferredLocale": "string",
+    "partnered": boolean,
+    "verified": boolean
+}</code></pre>
+
+                    <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <h3 class="text-yellow-400 font-semibold mb-2">Note</h3>
+                        <p class="text-gray-400">
+                            This endpoint only works for servers where the bot is a member.
+                            Rate limited to 5 requests per second.
+                        </p>
                     </div>
                 </div>
             </div>

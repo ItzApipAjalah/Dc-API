@@ -20,4 +20,9 @@ router.get('/docs', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/docs.html'));
 });
 
+// Add this route
+router.get('/server', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/server.html'));
+});
+
 module.exports = router; 

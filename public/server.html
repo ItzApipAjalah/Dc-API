@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Server Lookup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.3);
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+    </style>
+    <script src="/js/navbar.js"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <div id="navbar"></div>
+
+    <script>
+        document.getElementById('navbar').innerHTML = createNavbar();
+        initNavbar();
+    </script>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 w-72 glass-effect transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-[998]">
+        <div class="h-full flex flex-col pt-16">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-gray-700/50">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-semibold">Search History</h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportHistory()" 
+                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all"
+                            title="Export History">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                        </button>
+                        <label class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all cursor-pointer"
+                            title="Import History">
+                            <input type="file" class="hidden" accept=".json" onchange="importHistory(event)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L12 4m4 4v12"/>
+                            </svg>
+                        </label>
+                        <button onclick="clearHistory()" 
+                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all"
+                            title="Clear History">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span id="historyCount">0 items</span>
+                    <button onclick="clearPinnedHistory()" class="hover:text-white">Clear Pinned</button>
+                </div>
+            </div>
+            
+            <!-- History List -->
+            <div id="searchHistory" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                <!-- History items will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[997] lg:hidden hidden"></div>
+
+    <div class="container mx-auto px-4 py-12 lg:pl-80 mt-16">
+        <!-- Header -->
+        <div class="text-center mb-12 animate-fade">
+            <h1 class="text-5xl font-bold mb-3 gradient-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
+                Discord Server Lookup
+            </h1>
+            <p class="text-gray-400 text-lg">Get detailed information about any Discord server</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="max-w-xl mx-auto mb-12">
+            <div class="glass-effect rounded-2xl p-1">
+                <div class="flex flex-col gap-4">
+                    <div class="flex gap-2">
+                        <input type="text" 
+                            id="serverId" 
+                            placeholder="Enter Discord Server ID" 
+                            class="w-full px-6 py-4 rounded-xl bg-gray-800/50 border border-gray-700/50 focus:outline-none focus:border-indigo-500 text-white text-lg transition-all"
+                            onkeypress="if(event.key === 'Enter') showCaptcha()">
+                        <button onclick="showCaptcha()" 
+                            class="px-8 py-4 gradient-bg rounded-xl hover:opacity-90 transition-all font-semibold shadow-lg shadow-indigo-500/20">
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Card -->
+        <div id="serverDetails" class="max-w-3xl mx-auto mt-8 hidden animate-fade">
+            <div class="glass-effect rounded-2xl overflow-hidden shadow-xl">
+                <!-- Server Header -->
+                <div class="relative">
+                    <div id="serverBanner" class="w-full h-48 bg-gray-800 bg-cover bg-center"></div>
+                    <div class="absolute -bottom-16 left-8">
+                        <div class="p-1 rounded-full bg-gray-800/80 backdrop-blur-sm">
+                            <img id="serverIcon" class="w-32 h-32 rounded-full ring-4 ring-indigo-500/50" src="" alt="Server Icon">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server Info -->
+                <div class="pt-20 p-8">
+                    <div class="flex items-baseline gap-3 mb-6">
+                        <h2 id="serverName" class="text-3xl font-bold"></h2>
+                        <span id="serverId" class="text-sm text-gray-400 font-mono"></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-effect rounded-xl p-4">
+                            <h3 class="text-lg font-semibold mb-4">Overview</h3>
+                            <div class="space-y-2">
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Members</span>
+                                    <span id="memberCount"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Online</span>
+                                    <span id="onlineCount"></span>
+                                </p>
+                                <p class="flex justify-between">
+                                    <span class="text-gray-400">Description</span>
+                                    <span id="serverDescription" class="text-right"></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="glass-effect rounded-xl p-4">
+                            <h3 class="text-lg font-semibold mb-4">Features</h3>
+                            <div id="serverFeatures" class="flex flex-wrap gap-2">
+                                <!-- Features will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emojis Section -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold mb-4">Custom Emojis</h3>
+                        <div id="serverEmojis" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                            <!-- Emojis will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="max-w-md mx-auto mt-6 hidden animate-fade">
+            <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-center">
+                <span id="errorText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchServerDetails(serverId) {
+            try {
+                const response = await fetch(`/servers/api/${serverId}/info`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to fetch server details');
+                }
+
+                // Update UI with server details
+                document.getElementById('serverDetails').classList.remove('hidden');
+                document.getElementById('errorMessage').classList.add('hidden');
+
+                // Update server info
+                document.getElementById('serverName').textContent = data.name;
+                document.getElementById('serverId').textContent = data.id;
+                document.getElementById('memberCount').textContent = data.approximateMemberCount.toLocaleString();
+                document.getElementById('onlineCount').textContent = data.approximatePresenceCount.toLocaleString();
+                document.getElementById('serverDescription').textContent = data.description || 'No description';
+
+                // Update server icon
+                const serverIcon = document.getElementById('serverIcon');
+                serverIcon.src = data.icon || 'default-server-icon.png';
+                serverIcon.alt = `${data.name}'s icon`;
+
+                // Update server banner
+                const serverBanner = document.getElementById('serverBanner');
+                if (data.splash) {
+                    serverBanner.style.backgroundImage = `url(${data.splash})`;
+                } else {
+                    serverBanner.style.backgroundImage = 'none';
+                }
+
+                // Update features
+                const featuresContainer = document.getElementById('serverFeatures');
+                featuresContainer.innerHTML = data.features.map(feature => `
+                    <span class="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 text-sm">
+                        ${formatFeatureName(feature)}
+                    </span>
+                `).join('');
+
+                // Update emojis
+                const emojisContainer = document.getElementById('serverEmojis');
+                if (data.emojis && data.emojis.length > 0) {
+                    emojisContainer.innerHTML = data.emojis.map(emoji => `
+                        <div class="glass-effect rounded-lg p-2 flex flex-col items-center gap-1">
+                            <img src="https://cdn.discordapp.com/emojis/${emoji.id}.${emoji.animated ? 'gif' : 'png'}" 
+                                class="w-8 h-8" alt="${emoji.name}">
+                            <span class="text-xs text-gray-400">${emoji.name}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    emojisContainer.innerHTML = '<p class="text-gray-400 col-span-full text-center">No custom emojis</p>';
+                }
+
+            } catch (error) {
+                document.getElementById('serverDetails').classList.add('hidden');
+                document.getElementById('errorMessage').classList.remove('hidden');
+                document.getElementById('errorText').textContent = error.message;
+            }
+        }
+
+        function formatFeatureName(feature) {
+            return feature.toLowerCase()
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        function showCaptcha() {
+            const serverId = document.getElementById('serverId').value;
+            if (!serverId) {
+                document.getElementById('errorMessage').classList.remove('hidden');
+                document.getElementById('errorText').textContent = 'Please enter a server ID';
+                return;
+            }
+            fetchServerDetails(serverId);
+        }
+
+        const MAX_HISTORY_ITEMS = 50;
+
+        function saveToHistory(serverId, serverName, serverIcon) {
+            let history = JSON.parse(localStorage.getItem('serverHistory') || '[]');
+            
+            // Check if item exists and preserve its pinned status
+            const existingItem = history.find(item => item.serverId === serverId);
+            const pinned = existingItem ? existingItem.pinned : false;
+            
+            // Remove duplicate if exists
+            history = history.filter(item => item.serverId !== serverId);
+            
+            // Add new search to beginning
+            const newItem = {
+                serverId,
+                serverName,
+                serverIcon,
+                timestamp: new Date().toISOString(),
+                pinned
+            };
+
+            // Add to beginning if not pinned, otherwise add after last pinned item
+            if (!pinned) {
+                const lastPinnedIndex = history.findIndex(item => !item.pinned);
+                const insertIndex = lastPinnedIndex === -1 ? history.length : lastPinnedIndex;
+                history.splice(insertIndex, 0, newItem);
+            } else {
+                history.unshift(newItem);
+            }
+            
+            // Keep only MAX_HISTORY_ITEMS
+            if (history.length > MAX_HISTORY_ITEMS) {
+                const unpinnedIndex = history.findIndex(item => !item.pinned);
+                if (unpinnedIndex !== -1) {
+                    history.splice(unpinnedIndex, 1);
+                } else {
+                    history.pop();
+                }
+            }
+            
+            localStorage.setItem('serverHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
+
+        function updateHistorySidebar() {
+            const history = JSON.parse(localStorage.getItem('serverHistory') || '[]');
+            const container = document.getElementById('searchHistory');
+            document.getElementById('historyCount').textContent = `${history.length} items`;
+            
+            container.innerHTML = history.map(item => `
+                <div class="glass-effect rounded-lg p-2 group hover:bg-gray-800/50 transition-all">
+                    <div class="flex items-center gap-3">
+                        <img src="${item.serverIcon || 'default-server-icon.png'}" 
+                            class="w-10 h-10 rounded-full" 
+                            alt="${item.serverName}'s icon">
+                        <div class="flex-1 min-w-0 cursor-pointer" onclick="searchFromHistory('${item.serverId}')">
+                            <div class="flex items-center gap-2">
+                                <p class="font-medium truncate">${item.serverName}</p>
+                                ${item.pinned ? '<span class="text-yellow-500">📌</span>' : ''}
+                            </div>
+                            <p class="text-sm text-gray-400 truncate">${item.serverId}</p>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-gray-400">${formatTimeAgo(new Date(item.timestamp))}</span>
+                            <div class="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="togglePin('${item.serverId}')" 
+                                    class="p-1 text-gray-400 hover:text-yellow-500 transition-colors"
+                                    title="${item.pinned ? 'Unpin' : 'Pin'} search">
+                                    <svg class="w-4 h-4" fill="${item.pinned ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                                    </svg>
+                                </button>
+                                <button onclick="deleteHistoryItem('${item.serverId}')"
+                                    class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Delete from history">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchFromHistory(serverId) {
+            document.getElementById('serverId').value = serverId;
+            fetchServerDetails(serverId);
+        }
+
+        function togglePin(serverId) {
+            let history = JSON.parse(localStorage.getItem('serverHistory') || '[]');
+            const itemIndex = history.findIndex(item => item.serverId === serverId);
+            
+            if (itemIndex !== -1) {
+                history[itemIndex].pinned = !history[itemIndex].pinned;
+                
+                if (history[itemIndex].pinned) {
+                    const item = history.splice(itemIndex, 1)[0];
+                    history.unshift(item);
+                }
+                
+                localStorage.setItem('serverHistory', JSON.stringify(history));
+                updateHistorySidebar();
+            }
+        }
+
+        function deleteHistoryItem(serverId) {
+            let history = JSON.parse(localStorage.getItem('serverHistory') || '[]');
+            history = history.filter(item => item.serverId !== serverId);
+            localStorage.setItem('serverHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('serverHistory');
+            updateHistorySidebar();
+        }
+
+        function clearPinnedHistory() {
+            let history = JSON.parse(localStorage.getItem('serverHistory') || '[]');
+            history = history.filter(item => !item.pinned);
+            localStorage.setItem('serverHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
+
+        function exportHistory() {
+            const history = localStorage.getItem('serverHistory') || '[]';
+            const blob = new Blob([history], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'discord-server-lookup-history.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importHistory(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedHistory = JSON.parse(e.target.result);
+                        if (Array.isArray(importedHistory)) {
+                            localStorage.setItem('serverHistory', JSON.stringify(importedHistory));
+                            updateHistorySidebar();
+                        }
+                    } catch (error) {
+                        console.error('Invalid history file:', error);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+            return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        }
+
+        // Update fetchServerDetails to save to history
+        const originalFetchServerDetails = fetchServerDetails;
+        fetchServerDetails = async (serverId) => {
+            await originalFetchServerDetails(serverId);
+            
+            // Save to history after successful fetch
+            const serverName = document.getElementById('serverName').textContent;
+            const serverIcon = document.getElementById('serverIcon').src;
+            
+            if (serverName && serverIcon) {
+                saveToHistory(serverId, serverName, serverIcon);
+            }
+        };
+
+        // Initialize history on page load
+        document.addEventListener('DOMContentLoaded', updateHistorySidebar);
+
+        // Add sidebar toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Handle sidebar visibility on window resize
+        function handleResize() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth >= 1024) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        window.addEventListener('load', handleResize);
+        window.addEventListener('resize', handleResize);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html> 

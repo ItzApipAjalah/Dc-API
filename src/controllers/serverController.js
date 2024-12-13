@@ -1,4 +1,5 @@
 const client = require('../config/discord');
+const { REST } = require('discord.js');
 
 const getServers = (req, res) => {
     try {
@@ -274,6 +275,50 @@ const getServerMembers = async (req, res) => {
     }
 };
 
+const getServerInfo = async (req, res) => {
+    try {
+        const serverId = req.params.id;
+        const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+
+        // Use Discord's public API endpoint
+        const guildPreview = await rest.get(`/guilds/${serverId}/preview`);
+
+        const response = {
+            id: guildPreview.id,
+            name: guildPreview.name,
+            icon: guildPreview.icon ? 
+                `https://cdn.discordapp.com/icons/${guildPreview.id}/${guildPreview.icon}.${guildPreview.icon.startsWith('a_') ? 'gif' : 'png'}` 
+                : null,
+            splash: guildPreview.splash ? 
+                `https://cdn.discordapp.com/splashes/${guildPreview.id}/${guildPreview.splash}.jpg` 
+                : null,
+            discoverySplash: guildPreview.discovery_splash,
+            description: guildPreview.description,
+            features: guildPreview.features,
+            approximateMemberCount: guildPreview.approximate_member_count,
+            approximatePresenceCount: guildPreview.approximate_presence_count,
+            emojis: guildPreview.emojis,
+            stickers: guildPreview.stickers
+        };
+
+        res.json(response);
+    } catch (error) {
+        // Handle specific Discord API errors
+        if (error.status === 404) {
+            return res.status(404).json({
+                error: 'Server not found',
+                message: 'The server does not exist or is not public'
+            });
+        }
+
+        console.error('Error getting server info:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            message: 'An error occurred while fetching server information'
+        });
+    }
+};
+
 const handleError = (error, res) => {
     console.error('Error in server controller:', error);
     res.status(500).json({
@@ -285,5 +330,6 @@ const handleError = (error, res) => {
 module.exports = {
     getServers,
     getServerDetails,
-    getServerMembers
+    getServerMembers,
+    getServerInfo
 }; 
