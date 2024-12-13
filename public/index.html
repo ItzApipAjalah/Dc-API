@@ -877,6 +877,111 @@
             
             input.click();
         }
+
+        async function fetchUserDetails(token) {
+            try {
+                const userIdInput = document.getElementById('userId').value;
+                const userDetails = document.getElementById('userDetails');
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                
+                // Show loading state
+                loadingOverlay.classList.remove('hidden');
+                userDetails.classList.add('hidden');
+
+                // First try the mutual server endpoint
+                let response = await fetch(`/users/web/${userIdInput}`, {
+                    headers: {
+                        'cf-turnstile-response': token
+                    }
+                });
+                let data = await response.json();
+
+                // If user not found in mutual servers, try public lookup
+                if (!response.ok && response.status === 404) {
+                    response = await fetch(`/users/web/lookup/${userIdInput}`, {
+                        headers: {
+                            'cf-turnstile-response': token
+                        }
+                    });
+                    data = await response.json();
+                }
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to fetch user details');
+                }
+
+                // Save to history if successful
+                saveToHistory(userIdInput, data.username, data.avatarURL);
+
+                // Update UI with user data
+                document.getElementById('userBanner').style.backgroundColor = data.accentColor || '#000000';
+                document.getElementById('userAvatar').src = data.avatarURL;
+                document.getElementById('userName').textContent = data.username;
+                
+                // Update status
+                const statusDiv = document.getElementById('userStatus');
+                statusDiv.innerHTML = `
+                    ${getStatusIcon(data.status)}
+                    <span>${data.status}</span>
+                `;
+
+                // Update activity
+                const activityDiv = document.getElementById('userActivity');
+                if (data.activities && data.activities.length > 0) {
+                    const activity = data.activities[0];
+                    activityDiv.innerHTML = `
+                        ${getActivityTypeIcon(activity.type)}
+                        <span>${activity.name}</span>
+                        ${activity.state ? `<span class="text-sm">- ${activity.state}</span>` : ''}
+                    `;
+                } else {
+                    activityDiv.innerHTML = '';
+                }
+
+                // Show the results
+                loadingOverlay.classList.add('hidden');
+                userDetails.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error:', error);
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                loadingOverlay.innerHTML = `
+                    <div class="text-center text-red-400">
+                        <p class="text-lg font-semibold mb-2">Error</p>
+                        <p>${error.message || 'Failed to fetch user details'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function saveToHistory(userId, username, avatarUrl) {
+            if (!userId || !username || !avatarUrl) {
+                console.warn('Invalid data for history:', { userId, username, avatarUrl });
+                return;
+            }
+
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            
+            // Remove duplicate if exists
+            history = history.filter(item => item.userId !== userId);
+            
+            // Add new search to beginning
+            history.unshift({
+                userId,
+                username,
+                avatarUrl,
+                timestamp: new Date().toISOString(),
+                pinned: false // Initialize pinned state
+            });
+            
+            // Keep only MAX_HISTORY_ITEMS
+            if (history.length > MAX_HISTORY_ITEMS) {
+                history = history.slice(0, MAX_HISTORY_ITEMS);
+            }
+            
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
     </script>
 </body>
 </html> 
