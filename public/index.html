@@ -529,8 +529,8 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium">${activity.name}</span>
-                                            ${activity.type !== 'CUSTOM' ? `
-                                                <span class="text-xs text-gray-400">${String(activity.type).toLowerCase()}</span>
+                                            ${activity.type !== 4 ? `
+                                                <span class="text-xs text-gray-400">${formatActivityType(activity.type)}</span>
                                             ` : ''}
                                         </div>
                                         ${activity.state ? `
@@ -1155,6 +1155,21 @@
             if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
             if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
             return `${Math.floor(diffInSeconds / 86400)} days ago`;
+        }
+
+        // Add this helper function for formatting activity types
+        function formatActivityType(type) {
+            // Activity types can be numbers in Discord.js
+            const types = {
+                0: 'playing',
+                1: 'streaming',
+                2: 'listening',
+                3: 'watching',
+                4: 'custom',
+                5: 'competing'
+            };
+            
+            return types[type] || 'unknown';
         }
     </script>
 </body>
