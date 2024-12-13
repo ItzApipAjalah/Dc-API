@@ -114,12 +114,35 @@
         <div class="h-full flex flex-col pt-16">
             <!-- Sidebar Header -->
             <div class="p-4 border-b border-gray-700/50">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-3">
                     <h2 class="text-lg font-semibold">Search History</h2>
-                    <button onclick="clearHistory()" 
-                        class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-all">
-                        Clear All
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportHistory()" 
+                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all"
+                            title="Export History">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                        </button>
+                        <label class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all cursor-pointer"
+                            title="Import History">
+                            <input type="file" class="hidden" accept=".json" onchange="importHistory(event)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L12 4m4 4v12"/>
+                            </svg>
+                        </label>
+                        <button onclick="clearHistory()" 
+                            class="text-gray-400 hover:text-white text-sm p-2 rounded-lg hover:bg-gray-700/50 transition-all"
+                            title="Clear History">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-sm text-gray-400">
+                    <span id="historyCount">0 items</span>
+                    <button onclick="clearPinnedHistory()" class="hover:text-white">Clear Pinned</button>
                 </div>
             </div>
             
@@ -794,20 +817,40 @@
         function saveToHistory(userId, username, avatarUrl) {
             let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
             
+            // Check if item exists and preserve its pinned status
+            const existingItem = history.find(item => item.userId === userId);
+            const pinned = existingItem ? existingItem.pinned : false;
+            
             // Remove duplicate if exists
             history = history.filter(item => item.userId !== userId);
             
             // Add new search to beginning
-            history.unshift({
+            const newItem = {
                 userId,
                 username,
                 avatarUrl,
-                timestamp: new Date().toISOString()
-            });
+                timestamp: new Date().toISOString(),
+                pinned
+            };
+
+            // Add to beginning if not pinned, otherwise add after last pinned item
+            if (!pinned) {
+                const lastPinnedIndex = history.findIndex(item => !item.pinned);
+                const insertIndex = lastPinnedIndex === -1 ? history.length : lastPinnedIndex;
+                history.splice(insertIndex, 0, newItem);
+            } else {
+                history.unshift(newItem);
+            }
             
             // Keep only MAX_HISTORY_ITEMS
             if (history.length > MAX_HISTORY_ITEMS) {
-                history = history.slice(0, MAX_HISTORY_ITEMS);
+                // Remove oldest non-pinned item first
+                const unpinnedIndex = history.findIndex(item => !item.pinned);
+                if (unpinnedIndex !== -1) {
+                    history.splice(unpinnedIndex, 1);
+                } else {
+                    history.pop();
+                }
             }
             
             localStorage.setItem('searchHistory', JSON.stringify(history));
@@ -822,6 +865,9 @@
         function updateHistorySidebar() {
             const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
             const historyContainer = document.getElementById('searchHistory');
+            const historyCount = document.getElementById('historyCount');
+            
+            historyCount.textContent = `${history.length} item${history.length !== 1 ? 's' : ''}`;
             
             if (history.length === 0) {
                 historyContainer.innerHTML = `
@@ -833,15 +879,33 @@
             }
             
             historyContainer.innerHTML = history.map(item => `
-                <div class="glass-effect rounded-lg p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-all cursor-pointer"
-                    onclick="searchFromHistory('${item.userId}')">
+                <div class="glass-effect rounded-lg p-3 flex items-center gap-3 group hover:bg-gray-700/50 transition-all">
                     <img src="${item.avatarUrl}" class="w-10 h-10 rounded-full" alt="${item.username}'s avatar">
-                    <div class="flex-1 min-w-0">
-                        <p class="font-medium truncate">${item.username}</p>
+                    <div class="flex-1 min-w-0 cursor-pointer" onclick="searchFromHistory('${item.userId}')">
+                        <div class="flex items-center gap-2">
+                            <p class="font-medium truncate">${item.username}</p>
+                            ${item.pinned ? '<span class="text-yellow-500">📌</span>' : ''}
+                        </div>
                         <p class="text-sm text-gray-400 truncate">${item.userId}</p>
                     </div>
-                    <div class="text-xs text-gray-400">
-                        ${formatTimeAgo(new Date(item.timestamp))}
+                    <div class="flex items-center gap-1">
+                        <span class="text-xs text-gray-400">${formatTimeAgo(new Date(item.timestamp))}</span>
+                        <div class="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="togglePin('${item.userId}')" 
+                                class="p-1 text-gray-400 hover:text-yellow-500 transition-colors"
+                                title="${item.pinned ? 'Unpin' : 'Pin'} search">
+                                <svg class="w-4 h-4" fill="${item.pinned ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deleteHistoryItem('${item.userId}')"
+                                class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Delete from history">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -937,6 +1001,115 @@
             
             // Refresh the current page to update the view
             fetchServerMembers(currentServerId, currentPage);
+        }
+
+        // Add these new history management functions
+        function togglePin(userId) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            const itemIndex = history.findIndex(item => item.userId === userId);
+            
+            if (itemIndex !== -1) {
+                history[itemIndex].pinned = !history[itemIndex].pinned;
+                
+                // Move pinned items to top
+                if (history[itemIndex].pinned) {
+                    const item = history.splice(itemIndex, 1)[0];
+                    history.unshift(item);
+                }
+                
+                localStorage.setItem('searchHistory', JSON.stringify(history));
+                updateHistorySidebar();
+            }
+        }
+
+        function deleteHistoryItem(userId) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            history = history.filter(item => item.userId !== userId);
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
+
+        function clearPinnedHistory() {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            history = history.filter(item => !item.pinned);
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            updateHistorySidebar();
+        }
+
+        function exportHistory() {
+            const history = localStorage.getItem('searchHistory') || '[]';
+            const blob = new Blob([history], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'discord-lookup-history.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importHistory(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedHistory = JSON.parse(e.target.result);
+                        if (Array.isArray(importedHistory)) {
+                            localStorage.setItem('searchHistory', JSON.stringify(importedHistory));
+                            updateHistorySidebar();
+                        }
+                    } catch (error) {
+                        console.error('Invalid history file:', error);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Update saveToHistory to include pinned property
+        function saveToHistory(userId, username, avatarUrl) {
+            let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+            
+            // Check if item exists and preserve its pinned status
+            const existingItem = history.find(item => item.userId === userId);
+            const pinned = existingItem ? existingItem.pinned : false;
+            
+            // Remove duplicate if exists
+            history = history.filter(item => item.userId !== userId);
+            
+            // Add new search to beginning
+            const newItem = {
+                userId,
+                username,
+                avatarUrl,
+                timestamp: new Date().toISOString(),
+                pinned
+            };
+
+            // Add to beginning if not pinned, otherwise add after last pinned item
+            if (!pinned) {
+                const lastPinnedIndex = history.findIndex(item => !item.pinned);
+                const insertIndex = lastPinnedIndex === -1 ? history.length : lastPinnedIndex;
+                history.splice(insertIndex, 0, newItem);
+            } else {
+                history.unshift(newItem);
+            }
+            
+            // Keep only MAX_HISTORY_ITEMS
+            if (history.length > MAX_HISTORY_ITEMS) {
+                // Remove oldest non-pinned item first
+                const unpinnedIndex = history.findIndex(item => !item.pinned);
+                if (unpinnedIndex !== -1) {
+                    history.splice(unpinnedIndex, 1);
+                } else {
+                    history.pop();
+                }
+            }
+            
+            localStorage.setItem('searchHistory', JSON.stringify(history));
+            updateHistorySidebar();
         }
     </script>
 </body>
