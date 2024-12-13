@@ -15,12 +15,15 @@ router.get('/utils/helpers.js', (req, res) => {
     `);
 });
 
-// Add this route
+// Serve navbar.js
+router.get('/js/navbar.js', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/js/navbar.js'));
+});
+
 router.get('/docs', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/docs.html'));
 });
 
-// Add this route
 router.get('/server', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/server.html'));
 });
