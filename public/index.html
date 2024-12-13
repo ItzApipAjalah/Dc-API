@@ -523,8 +523,22 @@
                         <div class="space-y-3">
                             ${data.presence.activities.map(activity => `
                                 <div class="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
-                                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700">
-                                        ${getActivityTypeIcon(activity.type)}
+                                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700 overflow-hidden">
+                                        ${activity.assets?.largeImage ? `
+                                            <img src="${activity.assets.largeImage}" 
+                                                class="w-full h-full object-cover" 
+                                                alt="${activity.assets.largeText || activity.name}"
+                                                title="${activity.assets.largeText || ''}"
+                                            >
+                                        ` : activity.assets?.smallImage ? `
+                                            <img src="${activity.assets.smallImage}" 
+                                                class="w-full h-full object-cover" 
+                                                alt="${activity.assets.smallText || activity.name}"
+                                                title="${activity.assets.smallText || ''}"
+                                            >
+                                        ` : `
+                                            <div class="text-2xl">${getActivityTypeIcon(activity.type)}</div>
+                                        `}
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2">
