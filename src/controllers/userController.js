@@ -38,6 +38,9 @@ const getUserDetails = async (req, res) => {
                             url: activity.url || null,
                             details: activity.details || null,
                             applicationId: activity.applicationId || null,
+                            applicationIconURL: activity.applicationId && activity.assets?.largeImage ? 
+                                `https://cdn.discordapp.com/app-assets/${activity.applicationId}/${activity.assets.largeImage}.png` 
+                                : null,
                             timestamps: activity.timestamps ? {
                                 start: activity.timestamps.start || null,
                                 end: activity.timestamps.end || null
