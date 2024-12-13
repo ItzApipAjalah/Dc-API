@@ -307,12 +307,17 @@
 
         function showCaptcha() {
             const userIdInput = document.getElementById('userId').value;
+            const userDetails = document.getElementById('userDetails');
+            
             if (!userIdInput) {
                 document.getElementById('errorText').textContent = 'Please enter a Discord User ID';
                 document.getElementById('errorMessage').classList.remove('hidden');
                 return;
             }
 
+            // Hide the results card when showing captcha
+            userDetails.classList.add('hidden');
+            
             const modal = document.getElementById('captchaModal');
             modal.classList.remove('hidden');
 
