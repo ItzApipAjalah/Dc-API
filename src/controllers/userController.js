@@ -12,22 +12,46 @@ const getUserDetails = async (req, res) => {
         // Find mutual guilds with the bot
         const mutualGuilds = client.guilds.cache
             .filter(guild => guild.members.cache.has(userId))
-            .map(guild => ({
-                id: guild.id,
-                name: guild.name,
-                icon: guild.iconURL() || null,
-                member: {
-                    nickname: guild.members.cache.get(userId)?.nickname || null,
-                    joinedAt: guild.members.cache.get(userId)?.joinedAt,
-                    roles: guild.members.cache.get(userId)?.roles.cache
-                        .filter(role => role.id !== guild.id)
-                        .map(role => ({
-                            id: role.id,
-                            name: role.name,
-                            color: role.hexColor
-                        })) || []
-                }
-            }));
+            .map(guild => {
+                const member = guild.members.cache.get(userId);
+                return {
+                    id: guild.id,
+                    name: guild.name,
+                    icon: guild.iconURL() || null,
+                    member: {
+                        nickname: member?.nickname || null,
+                        joinedAt: member?.joinedAt,
+                        roles: member?.roles.cache
+                            .filter(role => role.id !== guild.id)
+                            .map(role => ({
+                                id: role.id,
+                                name: role.name,
+                                color: role.hexColor
+                            })) || []
+                    },
+                    presence: member.presence ? {
+                        status: member.presence.status,
+                        activities: member.presence.activities.map(activity => ({
+                            name: activity.name,
+                            type: activity.type,
+                            state: activity.state,
+                            url: activity.url || null,
+                            details: activity.details || null,
+                            applicationId: activity.applicationId || null,
+                            timestamps: activity.timestamps ? {
+                                start: activity.timestamps.start || null,
+                                end: activity.timestamps.end || null
+                            } : null,
+                            assets: activity.assets ? {
+                                largeImage: activity.assets.largeImageURL() || null,
+                                smallImage: activity.assets.smallImageURL() || null,
+                                largeText: activity.assets.largeText || null,
+                                smallText: activity.assets.smallText || null
+                            } : null
+                        }))
+                    } : null
+                };
+            });
 
         // Get user presence if available
         let presence = null;

@@ -253,8 +253,11 @@
                         <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
                             <span class="text-indigo-400">🎮</span> Activities
                         </h3>
-                        <div id="userActivities" class="space-y-3">
-                            <!-- Activities will be inserted here -->
+                        <div id="userActivities" class="glass-effect rounded-xl p-4 col-span-2">
+                            <p class="text-gray-400 text-sm font-medium mb-3">Activities</p>
+                            <div class="space-y-3">
+                                <!-- Activities will be inserted here -->
+                            </div>
                         </div>
                     </div>
 
@@ -514,36 +517,66 @@
                 document.getElementById('isBot').textContent = data.isBot ? 'Yes' : 'No';
 
                 // Update activities section
-                const activitiesContainer = document.getElementById('userActivities');
-                if (data.presence?.activities && data.presence.activities.length > 0) {
-                    activitiesContainer.innerHTML = data.presence.activities.map(activity => `
-                        <div class="glass-effect rounded-xl p-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-2xl">${getActivityTypeIcon(activity.type)}</span>
-                                    <span class="font-semibold">${activity.name}</span>
+                if (data.presence && data.presence.activities && data.presence.activities.length > 0) {
+                    document.getElementById('userActivities').innerHTML = `
+                        <p class="text-gray-400 text-sm font-medium mb-3">Activities</p>
+                        <div class="space-y-3">
+                            ${data.presence.activities.map(activity => `
+                                <div class="flex items-center gap-3 p-2 rounded-lg bg-gray-800/50">
+                                    <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-700">
+                                        ${getActivityTypeIcon(activity.type)}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium">${activity.name}</span>
+                                            ${activity.type !== 'CUSTOM' ? `
+                                                <span class="text-xs text-gray-400">${activity.type.toLowerCase()}</span>
+                                            ` : ''}
+                                        </div>
+                                        ${activity.state ? `
+                                            <p class="text-sm text-gray-400 truncate">${activity.state}</p>
+                                        ` : ''}
+                                        ${activity.details ? `
+                                            <p class="text-sm text-gray-400 truncate">${activity.details}</p>
+                                        ` : ''}
+                                        ${activity.assets?.largeImage ? `
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <img src="${activity.assets.largeImage}" class="w-8 h-8 rounded" 
+                                                    alt="${activity.assets.largeText || 'Activity image'}"
+                                                    title="${activity.assets.largeText || ''}"
+                                                >
+                                                ${activity.assets.smallImage ? `
+                                                    <img src="${activity.assets.smallImage}" class="w-6 h-6 rounded" 
+                                                        alt="${activity.assets.smallText || 'Activity icon'}"
+                                                        title="${activity.assets.smallText || ''}"
+                                                    >
+                                                ` : ''}
+                                            </div>
+                                        ` : ''}
+                                        ${activity.url ? `
+                                            <a href="${activity.url}" target="_blank" 
+                                                class="inline-flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 mt-1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                                </svg>
+                                                Watch Stream
+                                            </a>
+                                        ` : ''}
+                                        ${activity.timestamps?.start ? `
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                Started ${formatTimestamp(activity.timestamps.start)}
+                                            </p>
+                                        ` : ''}
+                                    </div>
                                 </div>
-                                <span class="text-sm text-indigo-400 font-medium px-3 py-1 bg-indigo-400/10 rounded-full">
-                                    ${activity.type}
-                                </span>
-                            </div>
-                            ${activity.state ? `
-                                <div class="mt-3 text-gray-300">
-                                    ${activity.state}
-                                </div>
-                            ` : ''}
-                            ${activity.details ? `
-                                <div class="mt-1 text-gray-400">
-                                    ${activity.details}
-                                </div>
-                            ` : ''}
+                            `).join('')}
                         </div>
-                    `).join('');
+                    `;
                 } else {
-                    activitiesContainer.innerHTML = `
-                        <div class="glass-effect rounded-xl p-6 text-gray-400 text-center">
-                            ${data.presence ? 'No activities' : 'Activities unavailable'}
-                        </div>
+                    document.getElementById('userActivities').innerHTML = `
+                        <p class="text-gray-400 text-sm font-medium mb-3">Activities</p>
+                        <p class="text-gray-400 text-sm">No current activities</p>
                     `;
                 }
 
@@ -1110,6 +1143,18 @@
             
             localStorage.setItem('searchHistory', JSON.stringify(history));
             updateHistorySidebar();
+        }
+
+        // Add this helper function for formatting timestamps
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+            return `${Math.floor(diffInSeconds / 86400)} days ago`;
         }
     </script>
 </body>
