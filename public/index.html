@@ -530,7 +530,7 @@
                                         <div class="flex items-center gap-2">
                                             <span class="font-medium">${activity.name}</span>
                                             ${activity.type !== 'CUSTOM' ? `
-                                                <span class="text-xs text-gray-400">${activity.type.toLowerCase()}</span>
+                                                <span class="text-xs text-gray-400">${String(activity.type).toLowerCase()}</span>
                                             ` : ''}
                                         </div>
                                         ${activity.state ? `
