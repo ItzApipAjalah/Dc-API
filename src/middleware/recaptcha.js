@@ -20,6 +20,9 @@ const verifyTurnstile = async (req, res, next) => {
         const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
             method: 'POST',
             body: formData,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
         });
 
         const outcome = await result.json();
