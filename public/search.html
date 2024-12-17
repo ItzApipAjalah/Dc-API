@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Username Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/utils/helpers.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(17, 24, 39, 0.3);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+    </style>
+    <script src="/js/navbar.js"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <div id="navbar"></div>
+
+    <div class="container mx-auto px-4 py-12 mt-16">
+        <!-- Header -->
+        <div class="text-center mb-12 animate-fade">
+            <h1 class="text-5xl font-bold mb-3 gradient-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
+                Discord Username Search
+            </h1>
+            <p class="text-gray-400 text-lg">Search for Discord users by username</p>
+            <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg max-w-2xl mx-auto">
+                <p class="text-yellow-400">Note: This search only works for users who share a mutual server with the bot.</p>
+            </div>
+        </div>
+
+        <!-- Search Form -->
+        <div class="max-w-xl mx-auto mb-12">
+            <div class="glass-effect rounded-2xl p-1">
+                <div class="flex flex-col gap-4">
+                    <div class="flex gap-2">
+                        <input type="text" 
+                            id="username" 
+                            placeholder="Enter Discord Username" 
+                            class="w-full px-6 py-4 rounded-xl bg-gray-800/50 border border-gray-700/50 focus:outline-none focus:border-indigo-500 text-white text-lg transition-all"
+                            onkeypress="if(event.key === 'Enter') searchUsername()">
+                        <button onclick="searchUsername()" 
+                            class="px-8 py-4 gradient-bg rounded-xl hover:opacity-90 transition-all font-semibold shadow-lg shadow-indigo-500/20">
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="searchResults" class="max-w-4xl mx-auto space-y-4 hidden animate-fade">
+            <!-- Results will be inserted here -->
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="max-w-md mx-auto mt-6 hidden animate-fade">
+            <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-center">
+                <span id="errorText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('navbar').innerHTML = createNavbar();
+        initNavbar();
+
+        async function searchUsername() {
+            const username = document.getElementById('username').value;
+            if (!username) {
+                showError('Please enter a username');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/users/api/search/${encodeURIComponent(username)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to search users');
+                }
+
+                displayResults(data);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function displayResults(data) {
+            const container = document.getElementById('searchResults');
+            container.classList.remove('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+
+            if (data.count === 0) {
+                container.innerHTML = `
+                    <div class="glass-effect rounded-xl p-6 text-center">
+                        <p class="text-gray-400">No users found matching your search.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.users.map(user => `
+                <div class="glass-effect rounded-xl p-6 animate-fade">
+                    <div class="flex items-center gap-4">
+                        <img src="${user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png'}" 
+                            alt="${user.username}'s avatar" 
+                            class="w-16 h-16 rounded-full">
+                        <div class="flex-1">
+                            <div class="flex items-baseline gap-2">
+                                <h3 class="text-xl font-semibold">${user.globalName || user.username}</h3>
+                                <span class="text-gray-400 text-sm">${user.username}</span>
+                            </div>
+                            <p class="text-gray-400 text-sm">ID: ${user.id}</p>
+                            ${user.nickname ? `<p class="text-gray-400 text-sm">Nickname: ${user.nickname}</p>` : ''}
+                        </div>
+                        ${user.presence ? `
+                            <div class="text-right">
+                                <p class="flex items-center justify-end gap-2">
+                                    ${getStatusIcon(user.presence.status)}
+                                    ${user.presence.status.charAt(0).toUpperCase() + user.presence.status.slice(1)}
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${user.presence?.activities?.length ? `
+                        <div class="mt-4 pt-4 border-t border-gray-700/50">
+                            <div class="space-y-2">
+                                ${user.presence.activities.map(activity => `
+                                    <div class="text-sm text-gray-400">
+                                        ${activity.type === 4 ? activity.state :
+                                        `${formatActivityType(activity.type)} ${activity.name}
+                                        ${activity.details ? `<br>${activity.details}` : ''}
+                                        ${activity.state ? `<br>${activity.state}` : ''}`}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function showError(message) {
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('errorText').textContent = message;
+        }
+
+        function formatActivityType(type) {
+            const types = {
+                0: 'Playing',
+                1: 'Streaming',
+                2: 'Listening to',
+                3: 'Watching',
+                4: 'Custom',
+                5: 'Competing in'
+            };
+            return types[type] || type;
+        }
+    </script>
+</body>
+</html> 

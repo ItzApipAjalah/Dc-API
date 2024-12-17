@@ -37,4 +37,8 @@ router.get('/invite', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/invite.html'));
 });
 
+router.get('/search', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/search.html'));
+});
+
 module.exports = router; 
