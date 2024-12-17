@@ -1,12 +1,22 @@
 const client = require('../config/discord');
 
-// Helper functions
+// Helper functions with safety checks
 function getTotalUsers() {
-    return client.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0).toLocaleString();
+    try {
+        return client?.guilds?.cache?.reduce((acc, guild) => acc + (guild.memberCount || 0), 0).toLocaleString() || '0';
+    } catch (error) {
+        console.error('Error getting total users:', error);
+        return '0';
+    }
 }
 
 function getServerCount() {
-    return client.guilds.cache.size.toLocaleString();
+    try {
+        return client?.guilds?.cache?.size?.toLocaleString() || '0';
+    } catch (error) {
+        console.error('Error getting server count:', error);
+        return '0';
+    }
 }
 
 // Global counters for statistics
@@ -19,12 +29,17 @@ function getTotalLookups() {
 }
 
 function getUptime() {
-    const uptime = Date.now() - startTime;
-    const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (days > 0) return `${days}d ${hours}h`;
-    return `${hours}h`;
+    try {
+        const uptime = Date.now() - startTime;
+        const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        
+        if (days > 0) return `${days}d ${hours}h`;
+        return `${hours}h`;
+    } catch (error) {
+        console.error('Error calculating uptime:', error);
+        return '0h';
+    }
 }
 
 function getApiRequests() {
@@ -83,22 +98,29 @@ const statusSuggestions = {
 
 const statusRotation = [
     {
-        type: 0, // Playing
+        type: 0,
         name: () => statusSuggestions.website.url,
         interval: 30000
     },
     {
-        type: 3, // Watching
-        name: () => statusSuggestions.statistics.users(),
+        type: 3,
+        name: () => {
+            try {
+                return statusSuggestions.statistics.users();
+            } catch (error) {
+                console.error('Error in status rotation:', error);
+                return 'Discord Lookup';
+            }
+        },
         interval: 30000
     },
     {
-        type: 2, // Listening
+        type: 2,
         name: () => statusSuggestions.statistics.lookups(),
         interval: 30000
     },
     {
-        type: 0, // Playing
+        type: 0,
         name: () => statusSuggestions.statistics.servers(),
         interval: 30000
     }

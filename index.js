@@ -4,6 +4,9 @@ require('dotenv').config();
 
 const app = express();
 
+// Trust proxy for Vercel
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.static('public'));
 app.use(express.json());

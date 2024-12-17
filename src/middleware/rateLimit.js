@@ -9,6 +9,11 @@ const apiLimiter = rateLimit({
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    // Add these settings for Vercel
+    trustProxy: true,
+    keyGenerator: (req) => {
+        return req.headers['x-real-ip'] || req.ip;
+    }
 });
 
 module.exports = apiLimiter; 

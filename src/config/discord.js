@@ -69,4 +69,17 @@ client.once('ready', () => {
     updateStatus();
 });
 
+// Add error handling for Discord client
+client.on('error', error => {
+    console.error('Discord client error:', error);
+});
+
+client.on('warn', warning => {
+    console.warn('Discord client warning:', warning);
+});
+
+process.on('unhandledRejection', error => {
+    console.error('Unhandled promise rejection:', error);
+});
+
 module.exports = client; 
