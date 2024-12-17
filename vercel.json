@@ -11,12 +11,6 @@
         "src": "/(.*)",
         "dest": "index.js"
       }
-    ],
-    "env": {
-        "DISCORD_TOKEN": "@DISCORD_TOKEN",
-        "CLIENT_ID": "@CLIENT_ID",
-        "TURNSTILE_SITE_KEY": "@TURNSTILE_SITE_KEY",
-        "TURNSTILE_SECRET_KEY": "@TURNSTILE_SECRET_KEY"
-    }
-  }
+    ]
+}
   
