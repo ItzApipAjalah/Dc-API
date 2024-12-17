@@ -9,8 +9,14 @@
     "routes": [
       {
         "src": "/(.*)",
-        "dest": "/index.js"
+        "dest": "index.js"
       }
-    ]
+    ],
+    "env": {
+        "DISCORD_TOKEN": "@discord_token",
+        "CLIENT_ID": "@client_id",
+        "TURNSTILE_SITE_KEY": "@turnstile_site_key",
+        "TURNSTILE_SECRET_KEY": "@turnstile_secret_key"
+    }
   }
   
