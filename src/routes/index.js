@@ -28,6 +28,10 @@ router.get('/server', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/server.html'));
 });
 
+router.get('/monitor', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/monitor.html'));
+});
+
 // Add this route
 router.get('/invite', (req, res) => {
     res.sendFile(path.join(__dirname, '../../public/invite.html'));

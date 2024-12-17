@@ -28,6 +28,7 @@ app.use('/', require('./src/routes/index'));
 app.use('/users', require('./src/routes/users'));
 app.use('/servers', require('./src/routes/servers'));
 app.use('/invites', require('./src/routes/invites'));
+app.use('/monitor', require('./src/routes/monitor'));
 
 // Discord bot events
 client.once('ready', () => {

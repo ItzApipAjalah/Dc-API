@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Status Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-effect {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .status-online { background-color: #3ba55c; }
+        .status-idle { background-color: #faa61a; }
+        .status-dnd { background-color: #ed4245; }
+        .status-offline { background-color: #747f8d; }
+    </style>
+    <script src="/js/navbar.js"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <div id="navbar"></div>
+
+    <div class="container mx-auto px-4 py-12 mt-16">
+        <!-- Header -->
+        <div class="text-center mb-12 animate-fade">
+            <h1 class="text-5xl font-bold mb-3 gradient-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">
+                Status Monitor
+            </h1>
+            <p class="text-gray-400 text-lg">Real-time Discord status monitoring</p>
+        </div>
+
+        <!-- Monitor Card -->
+        <div class="max-w-2xl mx-auto">
+            <div class="glass-effect rounded-2xl p-6 animate-fade">
+                <!-- User Info -->
+                <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-700/50">
+                    <img id="userAvatar" src="" alt="User Avatar" class="w-16 h-16 rounded-full">
+                    <div>
+                        <h2 id="userName" class="text-xl font-semibold"></h2>
+                        <p id="userId" class="text-gray-400 text-sm"></p>
+                    </div>
+                </div>
+
+                <!-- Status Info -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-400">Status</span>
+                        <span id="userStatus" class="font-medium"></span>
+                    </div>
+
+                    <!-- Activities -->
+                    <div id="activities" class="space-y-3">
+                        <!-- Activities will be inserted here -->
+                    </div>
+
+                    <!-- Monitor Info -->
+                    <div class="mt-6 pt-6 border-t border-gray-700/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-400">Last Check</span>
+                            <span id="lastCheck" class="font-medium"></span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-400">Uptime</span>
+                            <span id="uptime" class="font-medium"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('navbar').innerHTML = createNavbar();
+        initNavbar();
+
+        function getStatusIcon(status) {
+            return `<span class="status-dot status-${status}"></span>`;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Never';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        function formatActivityType(type) {
+            const types = {
+                0: 'Playing',
+                1: 'Streaming',
+                2: 'Listening to',
+                3: 'Watching',
+                4: 'Custom',
+                5: 'Competing in'
+            };
+            return types[type] || type;
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/monitor/status');
+                const data = await response.json();
+
+                // Update user info
+                document.getElementById('userAvatar').src = data.user.avatarURL || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                document.getElementById('userName').textContent = data.user.globalName || data.user.username;
+                document.getElementById('userId').textContent = data.user.id;
+
+                // Update status
+                const status = data.presence?.status || 'offline';
+                document.getElementById('userStatus').innerHTML = `
+                    ${getStatusIcon(status)}${status.charAt(0).toUpperCase() + status.slice(1)}
+                `;
+
+                // Update activities
+                const activitiesContainer = document.getElementById('activities');
+                if (data.presence?.activities?.length > 0) {
+                    activitiesContainer.innerHTML = data.presence.activities.map(activity => `
+                        <div class="glass-effect rounded-lg p-3">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-medium">${formatActivityType(activity.type)}</span>
+                                <span class="text-gray-400">${activity.name}</span>
+                            </div>
+                            ${activity.state ? `<p class="text-sm text-gray-400">${activity.state}</p>` : ''}
+                            ${activity.details ? `<p class="text-sm text-gray-400">${activity.details}</p>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    activitiesContainer.innerHTML = `
+                        <p class="text-gray-400 text-sm">No current activities</p>
+                    `;
+                }
+
+                // Update monitor info
+                document.getElementById('lastCheck').textContent = formatTimestamp(data.lastCheck);
+                document.getElementById('uptime').textContent = formatUptime(data.uptime);
+
+                // Add status change notification
+                if (data.statusChanged) {
+                    console.log(`Status changed to: ${status}`);
+                }
+            } catch (error) {
+                console.error('Failed to update status:', error);
+            }
+        }
+
+        // Initial update
+        updateStatus();
+
+        // Update every 5 seconds
+        setInterval(updateStatus, 5000);
+    </script>
+</body>
+</html> 
