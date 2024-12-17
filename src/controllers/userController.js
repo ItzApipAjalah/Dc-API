@@ -1,5 +1,6 @@
 const { REST } = require('discord.js');
 const client = require('../config/discord');
+const { incrementLookups } = require('../utils/statusManager');
 
 const getUserDetails = async (req, res) => {
     try {
@@ -101,6 +102,7 @@ const getUserDetails = async (req, res) => {
             premiumType: userData.premium_type
         };
 
+        incrementLookups();
         res.json(response);
     } catch (error) {
         handleError(error, res);
@@ -138,6 +140,7 @@ const lookupUser = async (req, res) => {
                 isInMutualServer: false
             };
 
+            incrementLookups();
             res.json(response);
         } catch (apiError) {
             if (apiError.code === 10013) {

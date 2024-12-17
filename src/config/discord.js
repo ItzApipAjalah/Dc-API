@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
+const { statusRotation } = require('../utils/statusManager');
 
 const client = new Client({
     intents: [
@@ -17,42 +18,28 @@ const client = new Client({
 client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
     
-    // Set the bot's activity
+    // Set initial status
     client.user.setPresence({
         activities: [
             {
-                name: 'https://discordlookup.amwp.website/',
-                type: ActivityType.Playing,
-                url: 'https://discordlookup.amwp.website/'
+                name: 'discordlookup.amwp.website',
+                type: ActivityType.Playing
             }
         ],
         status: 'online'
     });
 
-    // Optional: Rotate between multiple statuses
-    const activities = [
-        {
-            name: 'https://discordlookup.amwp.website/',
-            type: ActivityType.Playing
-        },
-        {
-            name: `${client.guilds.cache.size} servers`,
-            type: ActivityType.Watching
-        },
-        {
-            name: 'User Lookups',
-            type: ActivityType.Listening
-        }
-    ];
-
-    let currentActivity = 0;
+    // Start status rotation
+    let currentIndex = 0;
     
-    // Change activity every 10 seconds
-    setInterval(() => {
-        const activity = activities[currentActivity];
-        client.user.setActivity(activity.name, { type: activity.type });
-        currentActivity = (currentActivity + 1) % activities.length;
-    }, 10000);
+    function updateStatus() {
+        const status = statusRotation[currentIndex];
+        client.user.setActivity(status.name(), { type: status.type });
+        currentIndex = (currentIndex + 1) % statusRotation.length;
+        setTimeout(updateStatus, status.interval);
+    }
+
+    updateStatus();
 });
 
 module.exports = client; 

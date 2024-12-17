@@ -1,5 +1,6 @@
 const client = require('../config/discord');
 const { REST } = require('discord.js');
+const { incrementLookups } = require('../utils/statusManager');
 
 const getServers = (req, res) => {
     try {
@@ -138,6 +139,7 @@ const getServerDetails = async (req, res) => {
             systemChannelFlags: guild.systemChannelFlags.toArray()
         };
 
+        incrementLookups();
         res.json(detailedInfo);
     } catch (error) {
         handleError(error, res);
@@ -301,6 +303,7 @@ const getServerInfo = async (req, res) => {
             stickers: guildPreview.stickers
         };
 
+        incrementLookups();
         res.json(response);
     } catch (error) {
         // Handle specific Discord API errors
