@@ -159,73 +159,64 @@ const lookupUser = async (req, res) => {
 const searchByUsername = async (req, res) => {
     try {
         const username = req.params.username;
-        const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-        let foundUsers = [];
+        const client = require('../config/discord');
+        let foundUsers = new Map();
 
-        try {
-            // Use Discord's API to search for users
-            const response = await rest.get(`/users/@me/relationships`);
-            
-            // Get user data from mutual servers as backup
-            const client = require('../config/discord');
-            const mutualUsers = new Map();
-
-            for (const guild of client.guilds.cache.values()) {
-                try {
-                    const members = await guild.members.fetch();
-                    members.forEach(member => {
-                        if (!mutualUsers.has(member.user.id)) {
-                            mutualUsers.set(member.user.id, member);
-                        }
-                    });
-                } catch (error) {
-                    console.warn(`Failed to fetch members from guild ${guild.id}:`, error);
-                }
+        // Search through all guilds the bot is in
+        for (const guild of client.guilds.cache.values()) {
+            try {
+                // Search for members matching the username
+                const members = await guild.members.search({ query: username, limit: 10 });
+                
+                // Add unique users to results
+                members.forEach(member => {
+                    if (!foundUsers.has(member.user.id)) {
+                        foundUsers.set(member.user.id, {
+                            id: member.user.id,
+                            username: member.user.username,
+                            globalName: member.user.globalName,
+                            discriminator: member.user.discriminator || '0',
+                            nickname: member.nickname,
+                            avatarURL: member.user.displayAvatarURL({ dynamic: true, size: 4096 }),
+                            bannerURL: member.user.bannerURL({ dynamic: true, size: 4096 }),
+                            accentColor: member.user.accentColor,
+                            isBot: member.user.bot,
+                            createdAt: member.user.createdAt,
+                            flags: {
+                                value: member.user.flags?.bitfield,
+                                names: member.user.flags?.toArray() || []
+                            },
+                            presence: member.presence ? {
+                                status: member.presence.status,
+                                activities: member.presence.activities?.map(activity => ({
+                                    name: activity.name,
+                                    type: activity.type,
+                                    state: activity.state || null,
+                                    details: activity.details || null
+                                }))
+                            } : null,
+                            isInMutualServer: true
+                        });
+                    }
+                });
+            } catch (error) {
+                console.warn(`Failed to search in guild ${guild.id}:`, error);
             }
+        }
 
-            // Combine results from both sources
-            const allUsers = [...mutualUsers.values()];
-            
-            // Filter users by username
-            foundUsers = allUsers
-                .filter(user => 
-                    user.user.username.toLowerCase().includes(username.toLowerCase()) ||
-                    user.user.globalName?.toLowerCase().includes(username.toLowerCase()) ||
-                    user.nickname?.toLowerCase().includes(username.toLowerCase())
-                )
-                .map(member => ({
-                    id: member.user.id,
-                    username: member.user.username,
-                    globalName: member.user.globalName,
-                    discriminator: member.user.discriminator || '0',
-                    nickname: member.nickname,
-                    avatarURL: member.user.displayAvatarURL({ dynamic: true, size: 4096 }),
-                    bannerURL: member.user.bannerURL({ dynamic: true, size: 4096 }),
-                    accentColor: member.user.accentColor,
-                    isBot: member.user.bot,
-                    createdAt: member.user.createdAt,
-                    flags: {
-                        value: member.user.flags?.bitfield,
-                        names: member.user.flags?.toArray() || []
-                    },
-                    presence: member.presence ? {
-                        status: member.presence.status,
-                        activities: member.presence.activities?.map(activity => ({
-                            name: activity.name,
-                            type: activity.type,
-                            state: activity.state || null,
-                            details: activity.details || null
-                        }))
-                    } : null,
-                    isInMutualServer: true
-                }));
+        // Convert Map to array and sort by username
+        let foundUsersArray = Array.from(foundUsers.values())
+            .sort((a, b) => a.username.localeCompare(b.username));
 
-            // Try to fetch additional user data if not found in mutual servers
-            if (foundUsers.length === 0) {
-                try {
-                    const userData = await rest.get(`/users/${username}`);
-                    if (userData) {
-                        foundUsers.push({
+        // If no results found in mutual servers, try direct API lookup
+        if (foundUsersArray.length === 0) {
+            try {
+                const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+                // Try to interpret username as an ID first
+                if (/^\d+$/.test(username)) {
+                    try {
+                        const userData = await rest.get(`/users/${username}`);
+                        foundUsersArray.push({
                             id: userData.id,
                             username: userData.username,
                             globalName: userData.global_name,
@@ -245,31 +236,26 @@ const searchByUsername = async (req, res) => {
                             },
                             isInMutualServer: false
                         });
+                    } catch (error) {
+                        if (error.code !== 10013) { // Ignore "unknown user" errors
+                            console.warn('Failed to fetch user by ID:', error);
+                        }
                     }
-                } catch (error) {
-                    console.warn('Failed to fetch additional user data:', error);
                 }
+            } catch (error) {
+                console.warn('Failed to fetch additional user data:', error);
             }
-
-            // Sort results by username
-            foundUsers.sort((a, b) => a.username.localeCompare(b.username));
-
-            // Limit results
-            foundUsers = foundUsers.slice(0, 10);
-
-            incrementLookups();
-            res.json({
-                count: foundUsers.length,
-                users: foundUsers
-            });
-
-        } catch (apiError) {
-            console.error('API Error:', apiError);
-            res.status(500).json({
-                error: 'Failed to search users',
-                message: apiError.message
-            });
         }
+
+        // Limit results
+        foundUsersArray = foundUsersArray.slice(0, 10);
+
+        incrementLookups();
+        res.json({
+            count: foundUsersArray.length,
+            users: foundUsersArray
+        });
+
     } catch (error) {
         console.error('Error in username search:', error);
         res.status(500).json({
