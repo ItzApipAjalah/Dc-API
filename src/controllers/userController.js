@@ -156,6 +156,68 @@ const lookupUser = async (req, res) => {
     }
 };
 
+const searchByUsername = async (req, res) => {
+    try {
+        const username = req.params.username;
+        const client = require('../config/discord');
+        let foundUsers = [];
+
+        // Search through all guilds the bot is in
+        for (const guild of client.guilds.cache.values()) {
+            try {
+                // Fetch all members if not cached
+                await guild.members.fetch();
+                
+                // Find members matching username
+                const matches = guild.members.cache.filter(member => 
+                    member.user.username.toLowerCase().includes(username.toLowerCase()) ||
+                    member.user.globalName?.toLowerCase().includes(username.toLowerCase()) ||
+                    member.nickname?.toLowerCase().includes(username.toLowerCase())
+                );
+
+                // Add unique users to results
+                matches.forEach(member => {
+                    if (!foundUsers.some(user => user.id === member.user.id)) {
+                        foundUsers.push({
+                            id: member.user.id,
+                            username: member.user.username,
+                            globalName: member.user.globalName,
+                            nickname: member.nickname,
+                            avatarURL: member.user.displayAvatarURL({ dynamic: true, size: 4096 }),
+                            isBot: member.user.bot,
+                            createdAt: member.user.createdAt,
+                            presence: member.presence ? {
+                                status: member.presence.status,
+                                activities: member.presence.activities
+                            } : null
+                        });
+                    }
+                });
+            } catch (error) {
+                console.warn(`Failed to search in guild ${guild.id}:`, error);
+            }
+        }
+
+        // Sort results by username
+        foundUsers.sort((a, b) => a.username.localeCompare(b.username));
+
+        // Limit results to prevent large responses
+        foundUsers = foundUsers.slice(0, 10);
+
+        incrementLookups();
+        res.json({
+            count: foundUsers.length,
+            users: foundUsers
+        });
+    } catch (error) {
+        console.error('Error in username search:', error);
+        res.status(500).json({
+            error: 'Failed to search users',
+            message: error.message
+        });
+    }
+};
+
 const handleError = (error, res) => {
     console.error('Error in user controller:', error);
     
@@ -174,5 +236,6 @@ const handleError = (error, res) => {
 
 module.exports = {
     getUserDetails,
-    lookupUser
+    lookupUser,
+    searchByUsername
 }; 

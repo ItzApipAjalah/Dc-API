@@ -161,6 +161,42 @@ GET /servers/api/:id/members</code></pre>
     "isInMutualServer": "boolean"
 }</code></pre>
                     </div>
+
+                    <!-- Search Users by Username -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold mb-2 text-indigo-400">Search Users by Username</h3>
+                        <p class="text-gray-400 mb-2">Search for users by username across mutual servers</p>
+                        
+                        <div class="glass-effect rounded-lg p-4">
+                            <p class="font-mono mb-2">GET /users/api/search/:username</p>
+                            <p class="text-sm text-gray-400 mb-2">Parameters:</p>
+                            <ul class="list-disc list-inside text-sm text-gray-400 mb-4">
+                                <li>username (required) - Full or partial username to search for</li>
+                            </ul>
+                            <p class="text-sm text-gray-400 mb-2">Response:</p>
+                            <pre class="text-sm overflow-x-auto">
+<code>{
+    "count": "number",
+    "users": [{
+        "id": "string",
+        "username": "string",
+        "globalName": "string",
+        "nickname": "string",
+        "avatarURL": "string",
+        "isBot": "boolean",
+        "createdAt": "date",
+        "presence": {
+            "status": "string",
+            "activities": [{
+                "name": "string",
+                "type": "string",
+                "state": "string"
+            }]
+        }
+    }]
+}</code></pre>
+                        </div>
+                    </div>
                 </div>
             </div>
 
