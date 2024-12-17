@@ -13,10 +13,10 @@
       }
     ],
     "env": {
-        "DISCORD_TOKEN": "@discord_token",
-        "CLIENT_ID": "@client_id",
-        "TURNSTILE_SITE_KEY": "@turnstile_site_key",
-        "TURNSTILE_SECRET_KEY": "@turnstile_secret_key"
+        "DISCORD_TOKEN": "@DISCORD_TOKEN",
+        "CLIENT_ID": "@CLIENT_ID",
+        "TURNSTILE_SITE_KEY": "@TURNSTILE_SITE_KEY",
+        "TURNSTILE_SECRET_KEY": "@TURNSTILE_SECRET_KEY"
     }
   }
   
