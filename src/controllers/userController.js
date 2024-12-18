@@ -182,6 +182,7 @@ const searchByUsername = async (req, res) => {
                             accentColor: member.user.accentColor,
                             isBot: member.user.bot,
                             createdAt: member.user.createdAt,
+                            joinedAt: member.joinedAt,
                             flags: {
                                 value: member.user.flags?.bitfield,
                                 names: member.user.flags?.toArray() || []
@@ -192,10 +193,26 @@ const searchByUsername = async (req, res) => {
                                     name: activity.name,
                                     type: activity.type,
                                     state: activity.state || null,
-                                    details: activity.details || null
+                                    details: activity.details || null,
+                                    url: activity.url || null,
+                                    createdTimestamp: activity.createdTimestamp
                                 }))
                             } : null,
-                            isInMutualServer: true
+                            roles: member.roles.cache
+                                .filter(role => role.id !== guild.id) // Exclude @everyone role
+                                .sort((a, b) => b.position - a.position)
+                                .map(role => ({
+                                    id: role.id,
+                                    name: role.name,
+                                    color: role.hexColor,
+                                    position: role.position
+                                })),
+                            serverInfo: {
+                                id: guild.id,
+                                name: guild.name,
+                                icon: guild.iconURL({ dynamic: true }),
+                                memberCount: guild.memberCount
+                            }
                         });
                     }
                 });
@@ -207,45 +224,6 @@ const searchByUsername = async (req, res) => {
         // Convert Map to array and sort by username
         let foundUsersArray = Array.from(foundUsers.values())
             .sort((a, b) => a.username.localeCompare(b.username));
-
-        // If no results found in mutual servers, try direct API lookup
-        if (foundUsersArray.length === 0) {
-            try {
-                const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-                // Try to interpret username as an ID first
-                if (/^\d+$/.test(username)) {
-                    try {
-                        const userData = await rest.get(`/users/${username}`);
-                        foundUsersArray.push({
-                            id: userData.id,
-                            username: userData.username,
-                            globalName: userData.global_name,
-                            discriminator: userData.discriminator || '0',
-                            avatarURL: userData.avatar ? 
-                                `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}${userData.avatar.startsWith('a_') ? '.gif' : '.png'}?size=4096` 
-                                : null,
-                            bannerURL: userData.banner ? 
-                                `https://cdn.discordapp.com/banners/${userData.id}/${userData.banner}${userData.banner.startsWith('a_') ? '.gif' : '.png'}?size=4096` 
-                                : null,
-                            accentColor: userData.accent_color,
-                            isBot: userData.bot || false,
-                            createdAt: new Date(Number((BigInt(userData.id) >> 22n)) + 1420070400000),
-                            flags: {
-                                value: userData.flags,
-                                names: Object.keys(userData.public_flags || {})
-                            },
-                            isInMutualServer: false
-                        });
-                    } catch (error) {
-                        if (error.code !== 10013) { // Ignore "unknown user" errors
-                            console.warn('Failed to fetch user by ID:', error);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.warn('Failed to fetch additional user data:', error);
-            }
-        }
 
         // Limit results
         foundUsersArray = foundUsersArray.slice(0, 10);

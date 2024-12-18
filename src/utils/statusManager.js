@@ -21,8 +21,6 @@ function getServerCount() {
 
 // Global counters for statistics
 let dailyLookups = 0;
-let apiRequests = 0;
-let startTime = Date.now();
 
 function getTotalLookups() {
     return dailyLookups.toLocaleString();
@@ -60,10 +58,6 @@ function incrementLookups() {
     dailyLookups++;
 }
 
-function incrementApiRequests() {
-    apiRequests++;
-}
-
 // Reset daily stats at midnight
 setInterval(() => {
     const now = new Date();
@@ -72,62 +66,6 @@ setInterval(() => {
     }
 }, 60000); // Check every minute
 
-// Status configuration
-const statusSuggestions = {
-    statistics: {
-        users: () => `Watching ${getTotalUsers()} users`,
-        servers: () => `Active in ${getServerCount()} servers`,
-        lookups: () => `${getTotalLookups()} lookups today`,
-        uptime: () => `Online for ${getUptime()}`,
-    },
-    website: {
-        url: "discordlookup.amwp.website",
-        features: [
-            "User Lookup",
-            "Server Lookup",
-            "Invite Lookup",
-            "API Access"
-        ]
-    },
-    messages: [
-        "24/7 Uptime",
-        "Fast & Reliable",
-        "User-friendly Interface"
-    ]
-};
-
-const statusRotation = [
-    {
-        type: 0,
-        name: () => statusSuggestions.website.url,
-        interval: 30000
-    },
-    {
-        type: 3,
-        name: () => {
-            try {
-                return statusSuggestions.statistics.users();
-            } catch (error) {
-                console.error('Error in status rotation:', error);
-                return 'Discord Lookup';
-            }
-        },
-        interval: 30000
-    },
-    {
-        type: 2,
-        name: () => statusSuggestions.statistics.lookups(),
-        interval: 30000
-    },
-    {
-        type: 0,
-        name: () => statusSuggestions.statistics.servers(),
-        interval: 30000
-    }
-];
-
 module.exports = {
-    statusRotation,
-    incrementLookups,
-    incrementApiRequests
+    incrementLookups
 }; 
